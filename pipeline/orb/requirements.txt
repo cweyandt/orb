@@ -1,0 +1,6 @@
+matplotlib
+seaborn
+altair
+flask
+flask-restful
+testcase

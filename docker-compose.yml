@@ -8,18 +8,33 @@ version: "3.9"
 
 services:
   orb:
-    # image: jupyter/tensorflow-notebook
-    build: .
+    build: 
+      context: ./
+      dockerfile: ./pipeline/orb/Dockerfile
     volumes:
-       - ".:/home/jovyan/orb_local"
+      - "./data:/home/jovyan/data"
     ports:
-      - "8888:8888"
       - "443:443"
       - "80:80"
     stdin_open: true
     tty: true
+    # command: ["./api.py"]
+
+  jupyterlab:
+    # image: jupyter/tensorflow-notebook
+    build: 
+      context: ./
+      dockerfile: ./pipeline/jupyterlab/Dockerfile
+    volumes:
+      - "./data:/home/jovyan/data"
+      - "./:/home/jovyan/orb_local"
+    ports:
+      - "8888:8888"
+    stdin_open: true
+    tty: true
     environment:
       JUPYTER_ENABLE_LAB: "yes"
+      PASSWORD: ${PASSWORD}
 #    command: ["./main.py", "maskDetector", "--log-level", "debug"]
 
 
@@ -27,6 +42,7 @@ services:
   # nginx:  
   #   image: nginx
   #   links: 
+  #     - orb
   #     - jupyter
   #   volumes:
   #     - ./nginx.conf:/etc/nginx/nginx.conf
