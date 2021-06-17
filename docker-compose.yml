@@ -34,8 +34,6 @@ services:
     tty: true
     environment:
       JUPYTER_ENABLE_LAB: "yes"
-      PASSWORD: ${PASSWORD}
-#    command: ["./main.py", "maskDetector", "--log-level", "debug"]
 
 
 # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
