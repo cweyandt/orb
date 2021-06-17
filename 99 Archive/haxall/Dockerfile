@@ -1,8 +1,10 @@
+# ### Initial realase of Haxall https://github.com/haxall/haxall
+# ### Create a clean Ubuntu container with Haxall 1.0.76 ###
+# ### Author: Chris Weyandt (cweyandt@lbl.gov)
+# ### Date: 2021-06-09
+
 # Load base image from Ubuntu
 FROM ubuntu
-
-# build this: e.g docker build -t haxall .
-
 
 # Basic updating & utility installation
 RUN apt update
