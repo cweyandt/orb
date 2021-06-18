@@ -12,9 +12,9 @@ from flask import Flask
 from flask_restful import Resource, Api, reqparse
 # ----------------------
 
-# TEST CASE IMPORT
+# Pre-defined model import
 # ----------------
-from testcase import TestCase
+from orb_models import OrbModel
 # ----------------
 
 # FLASK REQUIREMENTS
@@ -23,23 +23,18 @@ app = Flask(__name__)
 api = Api(app)
 # ------------------
 
-# INSTANTIATE TEST CASE
+# Load the default model
 # ---------------------
-case = TestCase()
-case_index=0
+model = OrbModel()
 # ---------------------
 
 # DEFINE ARGUMENT PARSERS
 # -----------------------
-# ``step`` interface
-parser_step = reqparse.RequestParser()
-parser_step.add_argument('step')
+# ``select model`` interface
+parser_model = reqparse.RequestParser()
+parser_model.add_argument('model')
 
-# ``select emulator`` interface
-parser_name = reqparse.RequestParser()
-parser_name.add_argument('name')
-
-# ``advance`` interface
+# ``analyze`` interface
 parser_advance=[]
 for i in range(len(case.u)):
    temp = reqparse.RequestParser()
@@ -50,124 +45,81 @@ for i in range(len(case.u)):
 
 # DEFINE REST REQUESTS
 # --------------------
-class Advance(Resource):
-    '''Interface to advance the test case simulation.'''    
-    
-    def post(self):
-        '''POST request with input data to advance the simulation one step 
-        and receive current measurements.'''
-        u = parser_advance[case_index].parse_args()
-        print u
-        y = case.advance(u,case_index)
-        return y
 
-class Reset(Resource):
-    '''Interface to test case simulation step size.'''
-    
-    def put(self):
-        '''PUT request to reset the test.'''
-        case.reset(case_index)
-        return 'Testcase reset.'
-
-        
-class Step(Resource):
-    '''Interface to test case simulation step size.'''
-    
-    def get(self):
-        '''GET request to receive current simulation step in seconds.'''
-        step = case.get_step(case_index)
-        return step
-
-    def put(self):
-        '''PUT request to set simulation step in seconds.'''
-        args = parser_step.parse_args()
-        print args
-        step = args['step']
-        case.set_step(step,case_index)
-        return step, 201
-        
-class Inputs(Resource):
-    '''Interface to test case inputs.'''
-    
-    def get(self):
-        '''GET request to receive list of available inputs.'''
-        u_list = case.get_inputs(case_index)
-        return u_list
-        
-class Measurements(Resource):
-    '''Interface to test case measurements.'''
-    
-    def get(self):
-        '''GET request to receive list of available measurements.'''
-        y_list = case.get_measurements(case_index)
-        return y_list
-        
-class Results(Resource):
-    '''Interface to test case result data.'''
-    
-    def get(self):
-        '''GET request to receive measurement data.'''
-        Y = case.get_results(case_index)
-        return Y
-        
-class KPI(Resource):
-    '''Interface to test case KPIs.'''
-    
-    def get(self):
-        '''GET request to receive KPI data.'''
-        kpi = case.get_kpis(case_index)
-        return kpi
-        
-class Name(Resource):
-    '''Interface to test case name.'''
+class ModelAPI(Resource):
+    '''Interface to pre-trained models.'''
      
     def get(self):
 
-        '''GET request to receive test case name.'''
-        print case.get_name()
-        print case_index
-        name=case.get_name()[case_index]
+        '''GET request to receive available parameters for loaded model.'''
+        name=model.get_name()
+        print name
         return name
    
     def put(self):
-        '''PUT request to change the testcase.'''
-        global case_index   
-        args = parser_name.parse_args()
-        print args
-        name=args['name']
-        i=0
-        for fmu_name in case.get_name():
-                if name == fmu_name:
-                    case_index=i
+        '''PUT request to change the model.'''
+        # global case_index   
+        # args = parser_name.parse_args()
+        # print args
+        # name=args['name']
+        # i=0
+        # for fmu_name in case.get_name():
+        #         if name == fmu_name:
+        #             case_index=i
 
-                    break
-                i=i+1
-        print case_index
-        return 'Testcase selected.'
+        #             break
+        #         i=i+1
+        # print case_index
+        # return 'Testcase selected.'
+        pass 
 
-class Emulator(Resource):
-    '''Interface to test case name.'''
+        
+class Inputs(Resource):
+    '''Interface to model inputs.'''
     
     def get(self):
-        '''GET request to receive test case name.'''
-        name=case.get_name()
-        return name
-   
+        '''GET request to receive list of available inputs.'''
+        u_list = model.get_inputs()
+        return u_list
+        
 
+class AnalyzeAPI(Resource):
+    '''Interface to obtain estimates.'''
+
+    def get(self):
+        '''GET request to receive estimates from loaded model.'''
+        print model.get_name()
+        print model.input_status()
+        args = parser_analyze.parse_args()
+        print args
+        res=mode.analyze()
+        return res
+        
+
+class ResultsAPI(Resource):
+    '''Interface to test case result data.'''
+ 
+    def get(self):
+        '''GET request to receive analysis results.'''
+        Y = model.get_results()
+        return Y
+
+
+class PingAPI(Resource):
+    '''Interface to validate api is online'''
+
+    def get(self):
+        return 'Pong.'
 
 # --------------------
         
 # ADD REQUESTS TO API WITH URL EXTENSION
 # --------------------------------------
-api.add_resource(Advance, '/advance')
-api.add_resource(Reset, '/reset')
-api.add_resource(Step, '/step')
-api.add_resource(Inputs, '/inputs')
-api.add_resource(Measurements, '/measurements')
-api.add_resource(Results, '/results')
-api.add_resource(KPI, '/kpi')
-api.add_resource(Name, '/name')
-api.add_resource(Emulator, '/emulator')
+api.add_resource(ModelAPI, '/model')
+api.add_resource(InputsAPI, '/inputs')
+api.add_resource(AnalyzeAPI, '/analyze')
+api.add_resource(ResultsAPI, '/results')
+api.add_resource(PingAPI, '/ping')
 
 # --------------------------------------
 
