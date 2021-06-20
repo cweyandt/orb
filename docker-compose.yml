@@ -14,9 +14,9 @@ services:
     volumes:
       - "./data:/home/jovyan/data"
     expose:
-      - "80"
+      - "5000"
     ports:
-      - "8080:80"
+      - "8080:5000"
     stdin_open: true
     tty: true
     # command: ["./api.py"]
@@ -41,14 +41,18 @@ services:
       context: ./
       dockerfile: ./pipeline/web/Dockerfile
     volumes:
-      - "./04_Website:/web"
+      - "./04_Website:/web/html"
     ports: 
-      - "5000:5000"
+      - "80:5000"
     stdin_open: true
     tty: true
     environment:
       FLASK_ENV: "development"
-      FLASK_APP: /usr/src/app/web_app.py
+      FLASK_APP: "web_app.py"
+      FLASK_RUN_HOST: "0.0.0.0"
+    # command: ["cd","/usr/src/app"]
+    # command: python3 -m http.server 5000 --bind 127.0.0.1
+    # command: ["flask", "run"]
 
 
 # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
