@@ -1,0 +1,33 @@
+# Occupant Responsive Buildings
+# https://github.com/cweyandt/orb
+# Base docker image for running ORB framework
+# Created 2020-06-16, cweyandt@berkeley.edu
+
+# Initialize build with 
+# https://jupyter-docker-stacks.readthedocs.io/en/latest/using/specifics.html#tensorflow
+FROM tensorflow/tensorflow:latest
+
+USER root
+
+# Basic updating & utility installation
+RUN apt update
+RUN apt install -y \
+	wget \
+	unzip \
+	vim-tiny \
+	git
+
+RUN python3 -m pip --no-cache-dir install --upgrade \
+    "pip<20.3" \
+    setuptools
+
+COPY ./pipeline/orb/requirements.txt .
+RUN pip install -r requirements.txt
+
+# Download ORB repository -- DO THIS IN DOCKER COMPOSE?
+WORKDIR /home/jovyan
+RUN git clone https://github.com/cweyandt/orb.git
+
+
+# Map local data directory -- IN DOCKER COMPOSE
+
