@@ -10,7 +10,7 @@ services:
   orb:
     build: 
       context: ./
-      dockerfile: ./pipeline/orb/Dockerfile
+      dockerfile: ./docker/Dockerfile.orb
     volumes:
       - "./data:/home/jovyan/data"
     expose:
@@ -25,7 +25,7 @@ services:
     # image: jupyter/tensorflow-notebook
     build: 
       context: ./
-      dockerfile: ./pipeline/jupyterlab/Dockerfile
+      dockerfile: ./docker/Dockerfile.jupyter
     volumes:
       - "./data:/home/jovyan/data"
       - "./:/home/jovyan/orb_local"
@@ -39,9 +39,9 @@ services:
   web:
     build:
       context: ./
-      dockerfile: ./pipeline/web/Dockerfile
+      dockerfile: ./docker/Dockerfile.web
     volumes:
-      - "./04_Website:/web/html"
+      - "./web:/web"
     ports: 
       - "80:5000"
     stdin_open: true
@@ -49,7 +49,7 @@ services:
     environment:
       FLASK_ENV: "development"
       FLASK_APP: "web_app.py"
-      FLASK_RUN_HOST: "0.0.0.0"
+      # FLASK_RUN_HOST: "0.0.0.0"
     # command: ["cd","/usr/src/app"]
     # command: python3 -m http.server 5000 --bind 127.0.0.1
     # command: ["flask", "run"]
