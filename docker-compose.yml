@@ -13,9 +13,10 @@ services:
       dockerfile: ./pipeline/orb/Dockerfile
     volumes:
       - "./data:/home/jovyan/data"
+    expose:
+      - "80"
     ports:
-      - "443:443"
-      - "80:80"
+      - "8080:80"
     stdin_open: true
     tty: true
     # command: ["./api.py"]
@@ -34,6 +35,20 @@ services:
     tty: true
     environment:
       JUPYTER_ENABLE_LAB: "yes"
+
+  web:
+    build:
+      context: ./
+      dockerfile: ./pipeline/web/Dockerfile
+    volumes:
+      - "./04_Website:/web"
+    ports: 
+      - "5000:5000"
+    stdin_open: true
+    tty: true
+    environment:
+      FLASK_ENV: "development"
+      FLASK_APP: /usr/src/app/web_app.py
 
 
 # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
