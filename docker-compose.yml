@@ -57,15 +57,17 @@ services:
 
 #https://gist.github.com/cboettig/8643341bd3c93b62b5c2
   nginx:  
-    image: nginx
+    build: 
+      context: ./
+      dockerfile: ./docker/Dockerfile.nginx
     # links: 
     #   - orb
     #   - jupyter
-    volumes:
+    # volumes:
       # - ./docker/nginx.conf:/etc/nginx/nginx.conf
       # - ./letsencrypt.crt:/data/cert.crt
       # - /letsencrypt.key:/data/key.key
-      - ./04_Website:/usr/share/nginx/html
+      # - ./04_Website:/usr/share/nginx/html
     ports:
       - "80:80"
-      - "443:443"
+      # - "443:443"
