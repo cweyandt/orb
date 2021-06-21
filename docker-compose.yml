@@ -19,7 +19,8 @@ services:
       - "8080:5000"
     stdin_open: true
     tty: true
-    # command: ["./api.py"]
+    command: ["python3", "/home/jovyan/orb/simple_app.py"]
+
 
   jupyterlab:
     # image: jupyter/tensorflow-notebook
@@ -29,12 +30,33 @@ services:
     volumes:
       - "./data:/home/jovyan/data"
       - "./:/home/jovyan/orb_local"
-    ports:
-      - "8888:8888"
+    #ports:
+    #  - "8888:8888"
+    expose:
+      - "8888"
     stdin_open: true
     tty: true
     environment:
       JUPYTER_ENABLE_LAB: "yes"
+
+
+  #https://gist.github.com/cboettig/8643341bd3c93b62b5c2
+  nginx:  
+    build: 
+      context: ./
+      dockerfile: ./docker/Dockerfile.nginx
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./letsencrypt.crt:/data/cert.crt
+      # - ./letsencrypt.key:/data/key.key
+      # - ./web:/usr/share/nginx/html
+    ports:
+      - "80:80"
+      # - "443:443"
+    links:
+      - "jupyterlab"
+      - "orb"
+
 
   # web:
   #   build:
@@ -53,21 +75,3 @@ services:
   #   # command: ["cd","/usr/src/app"]
   #   # command: python3 -m http.server 5000 --bind 127.0.0.1
   #   # command: ["flask", "run"]
-
-
-#https://gist.github.com/cboettig/8643341bd3c93b62b5c2
-  nginx:  
-    build: 
-      context: ./
-      dockerfile: ./docker/Dockerfile.nginx
-    # links: 
-    #   - orb
-    #   - jupyter
-    # volumes:
-      # - ./docker/nginx.conf:/etc/nginx/nginx.conf
-      # - ./letsencrypt.crt:/data/cert.crt
-      # - /letsencrypt.key:/data/key.key
-      # - ./04_Website:/usr/share/nginx/html
-    ports:
-      - "80:80"
-      # - "443:443"

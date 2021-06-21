@@ -1,12 +1,4 @@
 FROM nginx:alpine
 MAINTAINER Chris Weyandt <cweyandt@berkeley.edu> 
 
-COPY docker/requirements.nginx requirements.txt
-
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# WORKDIR /web 
-
-# CMD [ "python", "web_app.py" ]
-
 COPY ./web /usr/share/nginx/html
