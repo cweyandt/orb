@@ -5,31 +5,37 @@
 
 # Initialize build with 
 # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/specifics.html#tensorflow
-FROM tensorflow/tensorflow:latest
-MAINTAINER Chris Weyandt <cweyandt@berkeley.edu> 
+#FROM tensorflow/tensorflow:latest
+# https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
 
-USER root
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+
+MAINTAINER Chris Weyandt <cweyandt@berkeley.edu>
+
+COPY ./orb /app
+
+#USER root
 
 # Basic updating & utility installation
-RUN apt update
-RUN apt install -y \
-	wget \
-	unzip \
-	vim-tiny \
-	git
+#RUN apt update
+#RUN apt install -y \
+#	wget \
+#	unzip \
+#	vim-tiny \
+#	git
 
-RUN python3 -m pip --no-cache-dir install --upgrade \
-    "pip<20.3" \
-    setuptools
+#RUN python3 -m pip --no-cache-dir install --upgrade \
+#    "pip<20.3" \
+#    setuptools
 
-COPY docker/requirements.orb requirements.txt
-RUN pip install -r requirements.txt
+#COPY docker/requirements.orb requirements.txt
+#RUN pip install -r requirements.txt
 
 
 # Copy the ORB app
-WORKDIR /home/jovyan
-COPY ./orb ./orb
-WORKDIR /home/jovyan/orb
+#WORKDIR /home/jovyan
+#COPY ./orb ./orb
+#WORKDIR /home/jovyan/orb
 
 
 # Download ORB repository -- DO THIS IN DOCKER COMPOSE?

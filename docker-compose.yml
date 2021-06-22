@@ -1,4 +1,4 @@
-# Occupant Responsive Buildings
+﻿# Occupant Responsive Buildings
 # https://github.com/cweyandt/orb
 # Base docker image for running ORB framework
 # Created 2020-06-16, cweyandt@berkeley.edu
@@ -11,16 +11,18 @@ services:
     build: 
       context: ./
       dockerfile: ./docker/Dockerfile.orb
-    volumes:
-      - "./data:/home/jovyan/data"
+#    volumes:
+#      - "./data:/home/jovyan/data"
     expose:
-      - "5000"
+      - "80"
     ports:
-      - "8080:5000"
+      - "8080:80"
     stdin_open: true
     tty: true
-    command: ["python3", "/home/jovyan/orb/simple_app.py"]
-
+#    command: ["python3", "/home/jovyan/orb/simple_app.py"]
+    environment:
+      PORT: 80
+      LOG_LEVEL: "debug"
 
   jupyterlab:
     # image: jupyter/tensorflow-notebook

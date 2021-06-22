@@ -12,9 +12,10 @@ Occupant Responsive Buildings
 
 # API Reference
 ---
+Following OpenAPI Specificationn: https://github.com/OAI/OpenAPI-Specification/tree/main/examples/v3.1
 
 
 
 # Docker container structure
 ---
-![ORB Container Architecture](./doc/orb_containers.png "ORB Containenr Architecture")
+![ORB Container Architecture](./doc/orb_containers.png "ORB Container Architecture")
