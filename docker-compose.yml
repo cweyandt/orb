@@ -11,8 +11,8 @@ services:
     build: 
       context: ./
       dockerfile: ./docker/Dockerfile.orb
-#    volumes:
-#      - "./data:/home/jovyan/data"
+    volumes:
+      - "./orb:/app"
     expose:
       - "80"
     ports:
@@ -42,7 +42,7 @@ services:
       JUPYTER_ENABLE_LAB: "yes"
 
 
-  #https://gist.github.com/cboettig/8643341bd3c93b62b5c2
+  # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
   nginx:  
     build: 
       context: ./
