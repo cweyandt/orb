@@ -1,1 +1,182 @@
-nginx.conf
+## Based on: https://github.com/calpolydatascience/jupyterhub-deploy-data301/blob/master/roles/nginx/templates/nginx.conf.j2
+# This also looks promising: https://mozilla.github.io/server-side-tls/ssl-config-generator/
+
+user  nginx;
+worker_processes  2;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+# Adapted from https://www.uvicorn.org/deployment/#running-behind-nginx
+http {
+    server {
+       listen 80;
+       client_max_body_size 4G;
+
+       server_name localhost;
+
+       include /etc/nginx/mime.types;
+       default_type application/octet-stream;
+
+       location / {
+            # path for static website
+            root /usr/share/nginx/html;
+#             index index.html;
+        }
+
+        location /static/  {
+            alias /usr/share/nginx/html/assets;
+        }
+
+#         location /orb/docs/ {
+#             proxy_set_header Host $http_host;
+#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#             proxy_set_header X-Forwarded-Proto $scheme;
+#             proxy_set_header Upgrade $http_upgrade;
+#             proxy_set_header Connection $connection_upgrade;
+#             proxy_redirect off;
+#             proxy_buffering off;
+#             proxy_pass http://orb/docs/;
+#         }
+        location /v1/ {
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_redirect off;
+            proxy_buffering off;
+            proxy_pass http://orb/;
+        }
+
+    }
+
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+    ''
+        close;
+    }
+
+    upstream orb {
+#        server unix:/tmp/orb.sock;
+        server orb:80;
+    }
+}
+
+
+
+
+#http {
+#    # ...
+#    include /etc/nginx/mime.types;
+#    default_type application/octet-stream;
+#
+#    map $http_upgrade $connection_upgrade {
+#          default upgrade;
+#          ''      close;
+#    }
+#
+#    upstream orb {
+#       server orb:80;
+#    }
+
+#    server {
+#        listen 80;
+#        server_name localhost;
+#
+#        root /usr/share/nginx/html;
+#
+#        location / {
+#            index index.html;
+#        }
+#
+#        location /static/  {
+#            alias /usr/share/nginx/html/assets/;
+#        }
+#
+#        location /main {
+#            include /etc/nginx/uwsgi_params;
+#            uwsgi_pass orb;
+#
+#            uwsgi_param Host $host;
+#            uwsgi_param X-Real-IP $remote_addr;
+#            uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+#            uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+#        }
+#    }
+#}
+
+
+# https://gist.github.com/cboettig/8643341bd3c93b62b5c2#file-docker-compose-yml
+# http {
+
+#   include /etc/nginx/mime.types;
+#   default_type application/octet-stream;
+
+#   map $http_upgrade $connection_upgrade {
+#         default upgrade;
+#         ''      close;
+#     }
+
+#   upstream jupyter {
+#       server jupyterlab:8888 fail_timeout=0;
+#   }
+
+
+#     server {
+#         listen 80;
+#         server_name localhost;
+#         rewrite        ^ https://$host$request_uri? permanent;
+#     }
+
+#     server {
+#         listen 443;
+
+#         client_max_body_size 50M;
+#         server_name localhost;
+
+#         ssl on;
+#         ssl_certificate /data/cert.crt;
+#         ssl_certificate_key /data/key.key;
+
+#         ssl_ciphers "AES128+EECDH:AES128+EDH";
+#         ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+#         ssl_prefer_server_ciphers on;
+#         ssl_session_cache shared:SSL:10m;
+#         add_header Strict-Transport-Security "max-age=63072000; includeSubDomains";
+#         add_header X-Content-Type-Options nosniff;
+#         ssl_stapling on; # Requires nginx >= 1.3.7
+#         ssl_stapling_verify on; # Requires nginx => 1.3.7
+#         resolver_timeout 5s;
+
+
+#         # Expose logs to "docker logs".
+#         # See https://github.com/nginxinc/docker-nginx/blob/master/Dockerfile#L12-L14
+#         access_log /var/log/nginx/access.log;
+#         error_log /var/log/nginx/error.log;
+
+#         location / {
+#             proxy_pass http://jupyter;
+
+#             proxy_set_header X-Real-IP $remote_addr;
+#             proxy_set_header Host $host;
+#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         }
+#      location ~* /(api/kernels/[^/]+/(channels|iopub|shell|stdin)|terminals/websocket)/? {
+#             proxy_pass http://jupyter;
+
+#             proxy_set_header X-Real-IP $remote_addr;
+#             proxy_set_header Host $host;
+#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#             # WebSocket support
+#             proxy_http_version 1.1;
+#             proxy_set_header Upgrade $http_upgrade;
+#             proxy_set_header Connection $connection_upgrade;
+
+#         }
+#     }
+# }

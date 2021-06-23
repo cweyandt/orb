@@ -13,7 +13,7 @@ USER root
 RUN apt update
 RUN apt install -y wget unzip vim-tiny git
 
-COPY docker/requirements.jupyter requirements.txt
+COPY docker/jupyterlab.requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 

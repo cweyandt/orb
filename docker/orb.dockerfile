@@ -26,7 +26,7 @@ MAINTAINER Chris Weyandt <cweyandt@berkeley.edu>
 
 RUN /usr/local/bin/python -m pip install --upgrade pip
 
-COPY docker/requirements.orb requirements.txt
+COPY docker/orb.requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 
