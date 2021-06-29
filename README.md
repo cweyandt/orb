@@ -12,7 +12,7 @@ Occupant Responsive Buildings
 
 # API Reference
 ---
-Following OpenAPI Specificationn: https://github.com/OAI/OpenAPI-Specification/tree/main/examples/v3.1
+Following OpenAPI Specification: https://github.com/OAI/OpenAPI-Specification/tree/main/examples/v3.1
 
 
 

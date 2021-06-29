@@ -26,6 +26,8 @@ MAINTAINER Chris Weyandt <cweyandt@berkeley.edu>
 
 RUN /usr/local/bin/python -m pip install --upgrade pip
 
+# RUN npm install -g swagger-spec-to-pdf
+
 COPY docker/orb.requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
