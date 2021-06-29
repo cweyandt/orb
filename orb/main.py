@@ -10,7 +10,7 @@ app = FastAPI(
     title='Occupant Responsive Buildings API',
     description='Estimate periods of occupancy in buildings',
     docs_url='/docs',
-    root_path="/v1")
+    root_path="/api/v1")
 
 app.include_router(models.router)
 
@@ -27,7 +27,7 @@ app.include_router(models.router)
 #     analog = "generic_analog"
 
 
-@app.get("/api")
+@app.get("/")
 def read_root(request: Request):
     return {"Help": "try visiting /v1/docs for documentation", "root_path": request.scope.get("root_path")}
 

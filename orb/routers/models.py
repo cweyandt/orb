@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import FastAPI, Query, Request, APIRouter, Body
 
 router = APIRouter(
-    prefix="/api/models",
+    prefix="/models",
     tags=["models"]
 )
 
