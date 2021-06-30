@@ -22,7 +22,7 @@ services:
     environment:
       PORT: 80
       LOG_LEVEL: "debug"
-
+    restart: always
     # Comment next line for production, it causes the server to auto-reload on file changes.
     command: ["/start-reload.sh"]
 

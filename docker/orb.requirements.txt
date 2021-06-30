@@ -10,3 +10,4 @@ starlette == 0.14.2
 hszinc
 pyhaystack
 ruptures
+mpld3
