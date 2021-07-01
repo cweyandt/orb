@@ -1,13 +1,13 @@
-from datetime import datetime
-from enum import Enum
 import pandas as pd
 import ruptures as rpt
 import numpy as np
-from fastapi import FastAPI, Query, Request, APIRouter, Body, File, UploadFile
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import HTMLResponse
-from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Union
+from enum import Enum
+from datetime import datetime
+from matplotlib import pyplot as plt
 import mpld3
 
 router = APIRouter(
@@ -15,14 +15,17 @@ router = APIRouter(
     tags=["models"]
 )
 
+
 class ModelName(str, Enum):
     pelt_rbf = "pelt_rbf"
     kmeans = "kmeans"
     firstevent = "firstevent"
 
+
 class RawData(BaseModel):
     ts: List[datetime]
     val: List[float]
+
 
 @router.put("/binseg_rbf")
 def binseg_rbf(breakpoints: int, data: RawData):
@@ -48,10 +51,11 @@ def binseg_rbf(breakpoints: int, data: RawData):
     fig, ax_array = rpt.display(points, bkps_i)
     plt.title('Binary Segmentation Search Method, RBF Segment Model')
     html_str = mpld3.fig_to_html(fig)
-    Html_file = open("index.html", "w")
-    Html_file.write(html_str)
-    Html_file.close()
+    html_file = open("index.html", "w")
+    html_file.write(html_str)
+    html_file.close()
     return {html_str}
+
 
 class GridMeta(BaseModel):
     ver: str
@@ -61,33 +65,69 @@ class GridMeta(BaseModel):
     hisEnd: Dict[str, str]
     hisLimit: int
 
+
 class GridCols(BaseModel):
     name: str
-    meta: Dict[str,Union[str,int,Dict]]
+    meta: Dict[str, Union[str, int, Dict]]
+
 
 class GridTS(BaseModel):
     _kind: str
     tz: str
     val: datetime
 
+
 class GridVal(BaseModel):
     _kind: str
     val: float
     unit: Optional[str] = None
+
 
 class GridRows(BaseModel):
     ts: GridTS
     v0: GridVal
 
 
-class JsonData(BaseModel):
+class GridJson(BaseModel):
     _kind: str
     meta: GridMeta
     cols: List[GridCols]
     rows: List[GridRows]
 
+    # Example Haystack Grid object as JSON
+    class Config:
+        schema_extra = {
+            "example": {
+                "_kind": "grid",
+                "meta": {"hisStart": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-22T00:00:00-07:00"},
+                         "hisEnd": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-23T00:00:00-07:00"},
+                         },
+                "cols": [
+                    {"name": "ts",
+                     "meta": {"tz": "Los_Angeles"}},
+                    {"name": "v0",
+                     "meta": {
+                        "id": {"_kind": "ref", "dis": "B74 Floor 1 Rm 107C Supply VAV-011 Zone Temperature",
+                               "val": "p:lbnl:r:2391ddb2-7b4413e5"}, "tz": "Los_Angeles", "unit": "\u00b0F",
+                        "locationRef": {"_kind": "ref", "dis": "B74 Floor 1", "val": "p:lbnl:r:239070b4-f416c9da"},
+                        "navName": "Zone Temperature",
+                         "spaceRef": {"_kind": "ref", "dis": "B74 Floor 1 Rm 107C", "val": "p:lbnl:r:23909712-0e6c5a3e"},
+                        "siteRef": {"_kind": "ref", "dis": "74", "val": "p:lbnl:r:22c912f0-91f6badd"},
+                        }
+                     }
+                ],
+                "rows": [
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-21T23:55:00-07:00"},
+                     "v0": {"_kind": "number", "val": 67.01000213623047, "unit": "\u00b0F"}},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-22T00:00:00-07:00"},
+                     "v0": {"_kind": "number", "val": 66.98999786376953, "unit": "\u00b0F"}}
+                ]
+            }
+        }
+
+
 @router.put("/binseg_rbf/json")
-def binseg_rbf(breakpoints: int, data: JsonData):
+def binseg_rbf(breakpoints: int, data: GridJson):
     ts = []
     val = []
     for row in data.rows:
@@ -95,7 +135,7 @@ def binseg_rbf(breakpoints: int, data: JsonData):
         val.append(row.v0.val)
     ts = np.array(ts)
     val = np.array(val)
-    # # Binary segmentation search method, RBF segment model
+    # Binary segmentation search method, RBF segment model
     algo = rpt.Binseg(model="rbf").fit(val)
     bkps_i = algo.predict(n_bkps=breakpoints)
     bkps_ts = []
@@ -103,19 +143,19 @@ def binseg_rbf(breakpoints: int, data: JsonData):
         bkps_ts.append(ts[i])
     return {"bkps_ts": bkps_ts}
 
-@router.put("/binseg_rbf/csv")
-async def binseg_rbf(breakpoints: int, file: bytes = UploadFile(...)):
-    rawData = await file.read()
-    data = pd.read_csv(rawData)
 
-    points = np.array(data.val)
-    # Binary segmentation search method, RBF segment model
-    algo = rpt.Binseg(model="rbf").fit(points)
-    bkps_i = algo.predict(n_bkps=breakpoints)
-    bkps_ts = []
-    for i in bkps_i[:-1]:
-        bkps_ts.append(data.ts[i])
-    return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
+# @router.put("/binseg_rbf/csv")
+# async def binseg_rbf(breakpoints: int, file: bytes = UploadFile(...)):
+#     rawdata = await file.read()
+#     data = pd.read_csv(rawdata)
+#     points = np.array(data.val)
+#     # Binary segmentation search method, RBF segment model
+#     algo = rpt.Binseg(model="rbf").fit(points)
+#     bkps_i = algo.predict(n_bkps=breakpoints)
+#     bkps_ts = []
+#     for i in bkps_i[:-1]:
+#         bkps_ts.append(data.ts[i])
+#     return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
 
 
 @router.get("/{model_name}")
@@ -125,6 +165,7 @@ def run_model(model_name: ModelName,
         "model_name": model_name,
         "message": "Model is not defined"
     }
+
 
 # Example of returning an HTML response with form to upload a file.
 @router.get("/")
@@ -142,4 +183,3 @@ async def main():
 </body>
     """
     return HTMLResponse(content=content)
-
