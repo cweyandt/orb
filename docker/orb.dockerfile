@@ -29,6 +29,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 # RUN npm install -g swagger-spec-to-pdf
 
 COPY docker/orb.requirements.txt requirements.txt
+COPY docker/orb.gunicorn_conf.py /gunicorn_conf.py
 RUN pip install -r requirements.txt
 
 
