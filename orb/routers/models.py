@@ -144,6 +144,24 @@ def binseg_rbf(breakpoints: int, data: GridJson):
     return {"bkps_ts": bkps_ts}
 
 
+@router.post("/binseg_rbf/json")
+def binseg_rbf(breakpoints: int, data: GridJson):
+    ts = []
+    val = []
+    for row in data.rows:
+        ts.append(row.ts.val)
+        val.append(row.v0.val)
+    ts = np.array(ts)
+    val = np.array(val)
+    # Binary segmentation search method, RBF segment model
+    algo = rpt.Binseg(model="rbf").fit(val)
+    bkps_i = algo.predict(n_bkps=breakpoints)
+    bkps_ts = []
+    for i in bkps_i[:-1]:
+        bkps_ts.append(ts[i])
+    return {"bkps_ts": bkps_ts}
+
+
 # @router.put("/binseg_rbf/csv")
 # async def binseg_rbf(breakpoints: int, file: bytes = UploadFile(...)):
 #     rawdata = await file.read()

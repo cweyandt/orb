@@ -38,5 +38,5 @@ with open("../01_ETL/skyspark_grid.json") as file:
     # Load its content and make a new dictionary
     data = json.load(file)
 
-response = requests.put(url, headers=headers, json=data, params=params)
+response = requests.post(url, headers=headers, json=data, params=params)
 printResponse(response)
