@@ -164,12 +164,13 @@ def binseg_rbf(breakpoints: int, data: GridJson):
     bkps_i = algo.predict(n_bkps=breakpoints)
     grid = {"_kind": "grid", "meta": {"ver":"3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},
             "cols":[{"name":"ts"},{"name":"v0"}],
-            "rows":[{"ts": data.meta.hisStart, "v0": "false"}]}
+            "rows":[{"ts": data.meta.hisStart, "v0": {"_kind":"Bool", "val":"false"}}]}
     toggle = True
     for i in bkps_i[:-1]:
-        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":"Los_Angeles", "val":ts[i]}, "v0": str(toggle).lower()} )
+        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":"Los_Angeles", "val":ts[i]},
+                              "v0": {"_kind":"Bool", "val":str(toggle).lower()} } )
         toggle = False if toggle else True
-    grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower()})
+    grid["rows"].append({"ts": data.meta.hisEnd, "v0": {"_kind":"Bool", "val":str(toggle).lower()}})
     return grid
 
 
