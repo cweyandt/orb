@@ -132,7 +132,10 @@ def binseg_rbf(breakpoints: int, data: GridJson):
     val = []
     for row in data.rows:
         ts.append(row.ts.val)
-        val.append(row.v0.val)
+        try:
+            val.append(row.v0.val)
+        except AttributeError:  # Deal with unitless value columns
+            val.append(row.v0)
     ts = np.array(ts)
     val = np.array(val)
     # Binary segmentation search method, RBF segment model
