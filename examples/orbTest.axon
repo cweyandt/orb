@@ -1,0 +1,29 @@
+(data) => do
+
+  // Prepare query
+  uri: """http://fmcs-svc-mgr.lbl.gov/api/v1/models/"""
+  method: "POST"
+  headers: {"Content-Type": "application/json"}
+  model: """binseg_rbf"""
+  endpoint: """/json"""
+  params: """?breakpoints=9"""
+  query: uri + model + endpoint + params
+
+  raw: null
+
+  // -- Execute with afHttpExt --
+  // try afHttpRequest(q_type, ``+query, q_headers, data)
+  // catch afHttpResponse({safeNames})
+
+  // -- Execute with dcHttpExt --
+  raw = dcHttp(``+query, headers, data, method)
+
+  // Exit if empty read
+  // if (raw==null or isEmpty(raw)) throw "raw is empty"
+
+  return raw
+
+end
+
+// -- Example Command --
+// connOrbApi(hisRead(@p:lbnl:r:274b79a3-b92af8c3, yesterday()).hisRollupAuto(1h).ioWriteJson(""))

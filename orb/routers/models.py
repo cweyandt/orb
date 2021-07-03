@@ -79,13 +79,13 @@ class GridTS(BaseModel):
 
 class GridVal(BaseModel):
     _kind: str
-    val: float
+    val: Union[int,float,str]
     unit: Optional[str] = None
 
 
 class GridRows(BaseModel):
     ts: GridTS
-    v0: GridVal
+    v0: Union[GridVal, float]
 
 
 class GridJson(BaseModel):
