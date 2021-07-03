@@ -162,9 +162,13 @@ def binseg_rbf(breakpoints: int, data: GridJson):
     # Binary segmentation search method, RBF segment model
     algo = rpt.Binseg(model="rbf").fit(val)
     bkps_i = algo.predict(n_bkps=breakpoints)
-    grid = {"_kind": "grid", "meta": {"ver":"3.0"}, "cols":[{"name":"ts"},{"name":"v0"}], "rows":[]}
+    grid = {"_kind": "grid", "meta": {"ver":"3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},
+            "cols":[{"name":"ts"},{"name":"v0"}],
+            "rows":[]}
+    toggle = True
     for i in bkps_i[:-1]:
-        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":"Los_Angeles", "val":ts[i]}, "v0": i%2} )
+        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":"Los_Angeles", "val":ts[i]}, "v0": str(toggle)} )
+        toggle = False if toggle else True
     return grid
 
 
