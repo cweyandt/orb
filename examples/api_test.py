@@ -17,7 +17,7 @@ def printResponse(res):
 
 url = 'http://localhost/api/v1/models/binseg_rbf'
 headers = {'Content-type': 'application/json'}
-params = {"breakpoints": "10"}
+
 
 wifiData = pd.read_pickle('../data/cleaned/' + 'wifi_ap_data.pkl')
 wifiTotals = wifiData.sum(axis=1).replace(0, np.nan).fillna(method='ffill')
@@ -32,11 +32,13 @@ data= {"ts": ts.tolist(), "val": vals.tolist()}
 # print(response.json())
 
 
-url = 'http://localhost/api/v1/models/binseg_rbf/json'
+url = 'http://localhost/api/v1/models/kernel/l2/json'
 # Open the skyspark_grid.json file
 with open("../01_ETL/skyspark_grid.json") as file:
     # Load its content and make a new dictionary
     data = json.load(file)
+
+params = {"breakpoints": 10}
 
 response = requests.post(url, headers=headers, json=data, params=params)
 printResponse(response)

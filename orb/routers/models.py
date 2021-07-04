@@ -1,7 +1,7 @@
 import pandas as pd
 import ruptures as rpt
 import numpy as np
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Union
@@ -14,13 +14,6 @@ router = APIRouter(
     prefix="/models",
     tags=["models"]
 )
-
-
-class ModelName(str, Enum):
-    pelt_rbf = "pelt_rbf"
-    kmeans = "kmeans"
-    firstevent = "firstevent"
-
 
 class RawData(BaseModel):
     ts: List[datetime]
@@ -124,10 +117,7 @@ class GridJson(BaseModel):
                 ]
             }
         }
-
-
-@router.put("/binseg_rbf/json")
-def binseg_rbf(breakpoints: int, data: GridJson):
+def parseHaystackGrid( data: GridJson ):
     ts = []
     val = []
     for row in data.rows:
@@ -138,40 +128,70 @@ def binseg_rbf(breakpoints: int, data: GridJson):
             val.append(row.v0)
     ts = np.array(ts)
     val = np.array(val)
-    # Binary segmentation search method, RBF segment model
-    algo = rpt.Binseg(model="rbf").fit(val)
-    bkps_i = algo.predict(n_bkps=breakpoints)
-    bkps_ts = []
-    for i in bkps_i[:-1]:
-        bkps_ts.append(ts[i])
-    return {"bkps_ts": bkps_ts}
+    return (ts, val)
 
-
-@router.post("/binseg_rbf/json")
-def binseg_rbf(breakpoints: int, data: GridJson):
-    ts = []
-    val = []
-    for row in data.rows:
-        ts.append(row.ts.val)
-        try:
-            val.append(row.v0.val)
-        except AttributeError:  # Deal with unitless value columns
-            val.append(row.v0)
-    ts = np.array(ts)
-    val = np.array(val)
-    # Binary segmentation search method, RBF segment model
-    algo = rpt.Binseg(model="rbf").fit(val)
-    bkps_i = algo.predict(n_bkps=breakpoints)
+def buildHaystackGrid( data: GridJson, bkps_i: List[int], ts ):
     grid = {"_kind": "grid", "meta": {"ver":"3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},
             "cols":[{"name":"ts"},{"name":"v0", "kind":"Bool"}],
-            "rows":[{"ts": data.meta.hisStart, "v0": "false"}]}
+            "rows":[{"ts": data.meta.hisStart, "v0": "false"}]}  # Initialize first point from hisStart
+
+    # Toggle true/false for each event TODO: make this smarter
     toggle = True
     for i in bkps_i[:-1]:
-        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":"Los_Angeles", "val":ts[i]},
+        grid["rows"].append( {"ts": {"_kind":"dateTime", "tz":data.meta.hisStart["tz"], "val":ts[i]},
                               "v0": str(toggle).lower() } )
         toggle = False if toggle else True
-    grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower() })
+
+    grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower() }) # Initialize last point from hisEnd
     return grid
+
+class SearchMethod(str, Enum):
+    binseg = "binseg"
+    window = "window"
+    dynamic = "dynamic"
+    bottomup = "bottom_up"
+    kernel = "kernel"
+
+
+class ModelName(str, Enum):
+    rbf = "rbf"
+    l2 = "l2"
+    l1 = "l1"
+    linear = "linear"
+
+
+@router.post("/{search_method}/{model}/json")
+def binseg_rbf( breakpoints:    int,
+                search_method:  SearchMethod,
+                model:          ModelName,
+                data:           GridJson,
+                width:          Optional[int] = 40,
+                min_size:       Optional[int] = 3,
+                jump:           Optional[int] = 5 ):
+
+    (ts, val) = parseHaystackGrid(data)
+
+    # Determine which search method to use from [Binseg, Window, Dynamic, BottomUp, Kernel]
+    if search_method == SearchMethod.binseg:
+        algo = rpt.Binseg(model=model).fit(val)
+    elif search_method == SearchMethod.window:
+        algo = rpt.Window(model=model, width=width).fit(val)
+    elif search_method == SearchMethod.dynamic:
+        algo = rpt.Dynp(model=model, min_size=min_size, jump=jump).fit(val)
+    elif search_method == SearchMethod.bottomup:
+        algo = rpt.BottomUp(model=model, min_size=min_size, jump=jump).fit(val)
+    elif search_method == SearchMethod.kernel:
+        if model in [ModelName.rbf, ModelName.linear]:
+            algo = rpt.KernelCPD(kernel=model, min_size=min_size, jump=jump).fit(val)
+        else:
+            algo = rpt.KernelCPD(kernel="rbf", min_size=min_size, jump=jump).fit(val)
+    else:
+        algo = rpt.Binseg(model=model).fit(val)
+
+
+    bkps_i = algo.predict(n_bkps=breakpoints)
+
+    return buildHaystackGrid(data, bkps_i, ts)
 
 
 # @router.put("/binseg_rbf/csv")
@@ -186,15 +206,6 @@ def binseg_rbf(breakpoints: int, data: GridJson):
 #     for i in bkps_i[:-1]:
 #         bkps_ts.append(data.ts[i])
 #     return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
-
-
-@router.get("/{model_name}")
-def run_model(model_name: ModelName,
-              ):
-    return {
-        "model_name": model_name,
-        "message": "Model is not defined"
-    }
 
 
 # Example of returning an HTML response with form to upload a file.

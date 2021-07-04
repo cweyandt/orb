@@ -1,0 +1,7 @@
+view: {inherit:"chart"}
+site: {var kind:"Ref<site>" input defVal:@p:lbnl:r:2543b6e0-6ec3d354}
+breakpoints: {var kind:"Number" input defVal:2}
+span: {var kind:"Span" input defVal:Span("today")}
+actualSchedule: {var kind:"Ref<point>" input defVal:@p:lbnl:r:25b22896-132cd609}
+uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+data: {expr:"connOrbApi( viSiteOcc({{site}}, {{span}}, 10min), {{breakpoints}}, {{actualSchedule}} )"}
