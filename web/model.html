@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bootstrap 4 project documentation theme for developers</title>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">    
+    <link rel="shortcut icon" href="favicon.ico">  
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <!-- FontAwesome JS -->
+    <script defer src="assets/fontawesome/js/all.js"></script>
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="assets/plugins/bootstrap/css/bootstrap.min.css">   
+    <!-- Plugins CSS -->    
+    <link rel="stylesheet" href="assets/plugins/prism/prism.css">
+    <link rel="stylesheet" href="assets/plugins/lightbox/dist/ekko-lightbox.css">
+    <link rel="stylesheet" href="assets/plugins/elegant_font/css/style.css">
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="assets/css/styles.css">
+    
+</head> 
+
+<body class="body-pink">
+    <div class="page-wrapper">
+        <!-- ******Header****** -->
+        <header id="header" class="header">
+            <div class="container">
+                <div class="branding">
+                    <h1 class="logo">
+                        <a href="index.html">
+                            <span aria-hidden="true" class="icon_building_alt icon"></span>
+                            <span class="text-highlight">ORB</span><span class="text-bold">API</span>
+                        </a>
+                    </h1>
+                </div><!--//branding-->
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active">Model</li>
+                </ol>
+                <div class="top-search-box">
+	                 <form class="form-inline search-form justify-content-center" action="" method="get">
+	            
+			            <input type="text" placeholder="Search..." name="search" class="form-control search-input">
+			            
+			            <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
+			            
+			        </form>
+                </div>
+            </div><!--//container-->
+        </header><!--//header-->
+        <div class="doc-wrapper">
+            <div class="container">
+                <div id="doc-header" class="doc-header text-center">
+                    <h1 class="doc-title"><span aria-hidden="true" class="icon icon_genius"></span> Model</h1>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Oct 12th, 2020</div>
+                </div><!--//doc-header-->
+                <div class="doc-body row" >
+                    <div class="doc-content col-md-9 col-12 order-1">
+                        <div class="content-inner">
+                            <section id="approach" class="doc-section">
+                                <h2 class="section-title">Approach</h2>
+                                    <div id="wifi" class="section-block">
+                                    <h3 class="block-title">WiFi Connections</h3>
+                                    <p>For success in its aims, ORB must be readily accessible to and useful for facilities managers in as large a number and variety of buildings as possible. While buildings can vary in the number and types of sensors they have installed, aggregated WiFi connection data (i.e. a count of the number of devices connected to WiFi in the building) is ubiquitous and easy-to-access in most buildings. As such, we use WiFi data as a route to determining building occupancy:</p>
+                                    
+                                    </div><!--//section-block-->
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/wifi.png" alt="screenshot" /></a>
+                                    </div>                                
+                                    <<div id="chgpt" class="section-block">
+                                    <h3 class="block-title">Change Point Detection</h3>
+                                    <p>Well-established change point detection methods exist to identify large shifts in time series data, such as this aggregated WiFi connection data. In particular, the <a href='https://centre-borelli.github.io/ruptures-docs/'>ruptures</a> Python package simplifies the usage of several of these methods on numpy arrays. The 11 methods outlined below work particularly well to identify two change points in a single day (i.e. start of day and end of day).</p>
+                                    
+                                    </div><!--//section-block-->
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bin_rbf.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bin_l2.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bin_l1.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bu_rbf.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bu_l2.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/bu_l1.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/ke_rbf.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/ke_li.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/wi_rbf.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/wi_l2.png" alt="screenshot" /></a>
+                                    </div>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/wi_l1.png" alt="screenshot" /></a>
+                                    </div>
+                                
+                            </section><!--//doc-section-->
+                            
+                            <section id="endpoints" class="doc-section">
+                                <h2 class="section-title">Endpoints</h2>
+                                <div id="analysis" class="section-block">
+                                    <h3 class="block-title">Analysis</h3>
+                                    <p>The analysis endpoint takes a passed-in set of WiFi connection data and analyzes it on aggregate in order to suggest a scheduled start time and end time for resources on each day of the week, including Saturday and Sunday. In its approach, each of the 11 change point detection models described above are utilized to estimate a number of start times and end times for each date in the passed-in dataset. The 10th percentile is calculated from the large resulting list of determined start times for each day, and the 90th percentile is calculated from the resulting list of determined end times for each day. This provides the user with an ideal start and end time for each day of the week, covering 90% of instances of that day of the week based on historical data and excluding any outliers that arise in change point detection.</p>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/timestamps.png" alt="screenshot" /></a>
+                                    </div>
+                                </div><!--//section-block-->
+                                <div id="prediction" class="section-block">
+                                    <h3 class="block-title">Prediction</h3>
+                                    <p>The prediction endpoint takes a passed-in set of WiFi connection data as well as a specific future date and suggests a scheduled start time and end time for resources on that specific date. In order to do so, it uses Facebook's <a href='https://facebook.github.io/prophet/'>Prophet</a> forecasting library to project WiFi connection data for the specified date, taking advantage of the library's ability to forecast cyclical time series with resiliency to holidays. Thereafter, the change point detection and percentile calculation described under analysis above is applied to the projected trend for the date in question and the 10th percentile of projected start times as well as 90th percentile of projected end times from the 11 models is returned as output.</p>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/forecast.png" alt="screenshot" /></a>
+                                    </div>
+                                    
+                                </div><!--//section-block-->
+                                
+                            </section><!--//doc-section-->
+                            
+                            
+                        </div><!--//content-inner-->
+                    </div><!--//doc-content-->
+                    <div class="doc-sidebar col-md-3 col-12 order-0 d-none d-md-flex">
+                        <div id="doc-nav" class="doc-nav">
+                            <nav id="doc-menu" class="nav doc-menu flex-column sticky">
+                                <a class="nav-link scrollto" href="#approach">Approach</a>
+                                    <nav class="doc-sub-menu nav flex-column">
+                                        <a class="nav-link scrollto" href="#wifi">WiFi Connections</a>
+                                        <a class="nav-link scrollto" href="#chgpt">Change Point Detection</a>
+                                    </nav><!--//nav-->
+                                <a class="nav-link scrollto" href="#endpoints">Endpoints</a>
+                                    <nav class="doc-sub-menu nav flex-column">
+                                        <a class="nav-link scrollto" href="#analysis">Analysis</a>
+                                        <a class="nav-link scrollto" href="#prediction">Prediction</a>
+                                    </nav><!--//nav-->
+                            </nav><!--//doc-menu-->
+                        </div><!--//doc-nav-->
+                    </div><!--//doc-sidebar-->
+                </div><!--//doc-body-->              
+            </div><!--//container-->
+        </div><!--//doc-wrapper-->
+        
+        <div id="promo-block" class="promo-block">
+            <div class="container">
+                <div class="promo-block-inner">
+                    <h3 class="promo-title text-center"><i class="fas fa-heart"></i> <a href="https://themes.3rdwavemedia.com/bootstrap-templates/portfolio/instance-bootstrap-portfolio-theme-for-developers/" target="_blank">Are you an ambitious and entrepreneurial developer?</a></h3>
+                    <div class="row">
+                        <div class="figure-holder col-lg-5 col-md-6 col-12">
+                            <div class="figure-holder-inner">
+                                <a href="https://themes.3rdwavemedia.com/bootstrap-templates/portfolio/instance-bootstrap-portfolio-theme-for-developers/" target="_blank"><img class="img-fluid" src="assets/images/demo/instance-promo.jpg" alt="Instance Theme" /></a>
+                                <a class="mask" href="https://themes.3rdwavemedia.com/bootstrap-templates/portfolio/instance-bootstrap-portfolio-theme-for-developers/"><i class="icon fa fa-heart pink"></i></a>
+                                
+                            </div>
+                        </div><!--//figure-holder-->
+                        <div class="content-holder col-lg-7 col-md-6 col-12">
+                            <div class="content-holder-inner">
+                                <div class="desc">
+                                    <h4 class="content-title"><strong> Instance - Bootstrap 4 Portfolio Theme for Aspiring Developers</strong></h4>
+                                    <p>Check out <a href="https://themes.3rdwavemedia.com/bootstrap-templates/portfolio/instance-bootstrap-portfolio-theme-for-developers/" target="_blank">Instance</a> - a Bootstrap personal portfolio theme I created for developers. The UX design is focused on selling a developer’s skills and experience to potential employers or clients, and has <strong class="highlight">all the winning ingredients to get you hired</strong>. It’s not only a HTML site template but also a marketing framework for you to <strong class="highlight">build an impressive online presence with a high conversion rate</strong>. </p>
+                                    <p><strong class="highlight">[Tip for developers]:</strong> If your project is Open Source, you can use this area to promote your other projects or hold third party adverts like Bootstrap and FontAwesome do!</p>
+                                    <a class="btn btn-cta" href="https://themes.3rdwavemedia.com/bootstrap-templates/portfolio/instance-bootstrap-portfolio-theme-for-developers/" target="_blank"><i class="fas fa-external-link-alt"></i> View Demo</a>
+                                    
+                                </div><!--//desc-->
+                                
+                                
+                                <div class="author"><a href="https://themes.3rdwavemedia.com">Xiaoying Riley</a></div>
+                            </div><!--//content-holder-inner-->
+                        </div><!--//content-holder-->
+                    </div><!--//row-->
+                </div><!--//promo-block-inner-->  
+            </div><!--//container-->
+        </div><!--//promo-block-->
+        
+    </div><!--//page-wrapper-->
+    
+    <footer id="footer" class="footer text-center">
+        <div class="container">
+            <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
+            <small class="copyright">Designed with <i class="fas fa-heart"></i> by <a href="https://themes.3rdwavemedia.com/" target="_blank">Xiaoying Riley</a> for developers</small>
+            
+        </div><!--//container-->
+    </footer><!--//footer-->
+    
+     
+    <!-- Main Javascript -->          
+    <script type="text/javascript" src="assets/plugins/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/plugins/prism/prism.js"></script>    
+    <script type="text/javascript" src="assets/plugins/jquery-scrollTo/jquery.scrollTo.min.js"></script>  
+    <script type="text/javascript" src="assets/plugins/lightbox/dist/ekko-lightbox.min.js"></script>      
+    <script type="text/javascript" src="assets/plugins/stickyfill/dist/stickyfill.min.js"></script>                                                              
+    <script type="text/javascript" src="assets/js/main.js"></script>
+    
+</body>
+</html> 
+
