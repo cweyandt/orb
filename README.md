@@ -1,5 +1,8 @@
-# orb
-Occupant Responsive Buildings
+# ORB
+Welcome to the Occupant Responsive Buildings (ORB) repository! Here you will find documentation to help you:
+- Understand the API that connects to our Change Point Detection models
+- Understand the Change Point Detection models created for predicting occupancy based on wifi data
+- Understand how the ground truth for model accuracy was created
 
 
 # System specification

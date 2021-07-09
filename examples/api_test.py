@@ -1,32 +1,44 @@
 from datetime import datetime
+from pprint import pprint
 
 import requests
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+import json
+
+def printResponse(res):
+    print("Response:\t" + str(res))
+    print("Reason:\t\t" + str(res.reason))
+    print("Headers:\t" + str(res.headers))
+    print("Content:\t _____________________________" )
+    # print(res.content)
+    pprint(json.loads(res.content), width=120)
 
 url = 'http://localhost/api/v1/models/binseg_rbf'
 headers = {'Content-type': 'application/json'}
-params = {"breakpoints": "10"}
+
 
 wifiData = pd.read_pickle('../data/cleaned/' + 'wifi_ap_data.pkl')
-wifiTotals = wifiData.sum(axis=1)
-wifiTotals = wifiTotals.replace(0, np.nan)
-wifiTotals = wifiTotals.fillna(method='ffill')
+wifiTotals = wifiData.sum(axis=1).replace(0, np.nan).fillna(method='ffill')
 wifiTotals.index = wifiTotals.index.tz_localize(None)
 
 vals = np.array(wifiTotals["2020-6-21 00:00":"2020-6-28 00:00"])
 ts = np.array(wifiTotals["2020-6-21 00:00":"2020-6-28 00:00"].index)
 data= {"ts": ts.tolist(), "val": vals.tolist()}
 
-print(data)
+# response = requests.put(url, headers=headers, json=data, params=params)
+#
+# print(response.json())
 
-# plt.figure(figsize=(20, 8))
-# plt.title("Wifi Connections - This Week Last Year")
-# plt.plot(wifiTotals["2020-6-22 00:00":"2020-6-23 00:00"])
 
-response = requests.put(url, headers=headers, json=data, params=params)
+url = 'http://localhost/api/v1/models/kernel/l2/json'
+# Open the skyspark_grid.json file
+with open("../01_ETL/skyspark_grid.json") as file:
+    # Load its content and make a new dictionary
+    data = json.load(file)
 
-print(response.json())
-# print(response.url)
-# print(response.request.headers)
+params = {"breakpoints": 10}
+
+response = requests.post(url, headers=headers, json=data, params=params)
+printResponse(response)

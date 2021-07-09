@@ -1,0 +1,63 @@
+(data, breakpoints: 10, ref:null) => do
+
+  // Prepare query
+  uri: """http://fmcs-svc-mgr.lbl.gov/api/v1/models/"""
+  method: "POST"
+  headers: {"Content-Type": "application/json"}
+  model: "binseg_rbf"
+  endpoint: "/json"
+  params: "?breakpoints=" + breakpoints.toStr()
+  query: uri + model + endpoint + params
+
+  raw: null
+
+  // -- Execute with afHttpExt --
+  // try afHttpRequest(q_type, ``+query, q_headers, data)
+  // catch afHttpResponse({safeNames})
+
+  // -- Execute with dcHttpExt --
+  raw = dcHttp(``+query, headers, data.ioWriteJson(""), method)
+
+  // Exit if empty read
+  if (raw==null or isEmpty(raw)) throw "raw is empty"
+
+  res: raw.ioReadJson()
+          .toGrid()
+          .renameCol("v0", "v1")
+          .addColMeta("v1", { "dis":"ORB Occupancy Estimate",
+                              "chartGroup":"g0",
+                              "color":"#e74c3c" })
+
+  res = res.hisMap(v => v.parseBool())
+  // res = res.hisMap(v => if (v.parseBool()) 1% else 0%)
+
+  data = data.addColMeta("v0", { "chartGroup":"g0",
+                                 "color":"#e74c3c",
+                                 "strokeWidth":2.5,
+                                 "yAxisPosition": "left"})
+
+  if (ref==null)
+    combined: hisJoin([data, res])
+  else
+    refData: readById(ref).hisRead(data.meta["hisStart"]..data.meta["hisEnd"])
+    refData = refData
+                     .addColMeta("v0", { "chartGroup":"g0",
+                                         "chartAreaMode":"axisMin",
+                                         "opacity":0.2,
+                                         "yAxisMax":0.2,
+                                         "yAxisVisible":"False",
+                                         "yAxisPosition": "right",
+                                         "dis":"Real HVAC Schedule"})
+    combined: hisJoin([data, res, refData])
+
+  return combined
+
+end
+
+/*
+x,y,chartType,chartGroup,dis,color,strokeWidth,yAxisPosition,opacity,chartAreaMode,yAxisMax,yAxisVisible
+"ts","v0","line","g0","B91 Total Occupancy Sensors ON","#e74c3c",2.5,"left",,,,
+"ts",@p:lbnl:r:25b22896-132cd609,"line","g0","Real HVAC Schedule","#3498db",,"right",0.2,"axisMin",0.2kW,F
+"ts","v1","runtime","g0","ORB Occupancy Estimate","#e74c3c",,,,,,
+
+*/
