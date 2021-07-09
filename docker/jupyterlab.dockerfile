@@ -13,13 +13,7 @@ USER root
 RUN apt update
 RUN apt install -y wget unzip vim-tiny git
 
-COPY ./pipeline/jupyterlab/requirements.txt .
+COPY docker/jupyterlab.requirements.txt requirements.txt
+
 RUN pip install -r requirements.txt
-
-# Download ORB repository -- DO THIS IN DOCKER COMPOSE
-# WORKDIR /home/jovyan
-# RUN git clone https://github.com/cweyandt/orb.git
-
-
-# Map local data directory -- IN DOCKER COMPOSE
 

@@ -1,4 +1,4 @@
-# Occupant Responsive Buildings
+﻿# Occupant Responsive Buildings
 # https://github.com/cweyandt/orb
 # Base docker image for running ORB framework
 # Created 2020-06-16, cweyandt@berkeley.edu
@@ -10,42 +10,53 @@ services:
   orb:
     build: 
       context: ./
-      dockerfile: ./pipeline/orb/Dockerfile
+      dockerfile: docker/orb.dockerfile
     volumes:
-      - "./data:/home/jovyan/data"
+      - "./orb:/app"
+    expose:
+      - "80"
     ports:
-      - "443:443"
-      - "80:80"
+      - "8080:80"
     stdin_open: true
     tty: true
-    # command: ["./api.py"]
+    environment:
+      PORT: 80
+      LOG_LEVEL: "debug"
+
+    # Comment next line for production, it causes the server to auto-reload on file changes.
+    command: ["/start-reload.sh"]
 
   jupyterlab:
     # image: jupyter/tensorflow-notebook
     build: 
       context: ./
-      dockerfile: ./pipeline/jupyterlab/Dockerfile
+      dockerfile: docker/jupyterlab.dockerfile
     volumes:
       - "./data:/home/jovyan/data"
       - "./:/home/jovyan/orb_local"
     ports:
       - "8888:8888"
+    expose:
+      - "8888"
     stdin_open: true
     tty: true
     environment:
       JUPYTER_ENABLE_LAB: "yes"
 
 
-# https://gist.github.com/cboettig/8643341bd3c93b62b5c2
-  # nginx:  
-  #   image: nginx
-  #   links: 
-  #     - orb
-  #     - jupyter
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - ./letsencrypt.crt:/data/cert.crt
-  #     - /letsencrypt.key:/data/key.key
-  #   ports:
-  #     - 80:80
-  #     - 443:443
+  # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
+  nginx:  
+    build: 
+      context: ./
+      dockerfile: docker/nginx.dockerfile
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web:/usr/share/nginx/html
+      # - ./letsencrypt.crt:/data/cert.crt
+      # - ./letsencrypt.key:/data/key.key
+    ports:
+      - "80:80"
+      # - "443:443"
+    links:
+      - "jupyterlab"
+      - "orb"
