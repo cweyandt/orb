@@ -30,24 +30,24 @@ def binseg_rbf(breakpoints: int, data: RawData):
     for i in bkps_i[:-1]:
         bkps_ts.append(data.ts[i])
     return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
-
-
-@router.put("/binseg_rbf/plot")
-def binseg_rbf(breakpoints: int, data: RawData):
-    points = np.array(data.val)
-    # Binary segmentation search method, RBF segment model
-    algo = rpt.Binseg(model="rbf").fit(points)
-    bkps_i = algo.predict(n_bkps=breakpoints)
-    bkps_ts = []
-    for i in bkps_i[:-1]:
-        bkps_ts.append(data.ts[i])
-    fig, ax_array = rpt.display(points, bkps_i)
-    plt.title('Binary Segmentation Search Method, RBF Segment Model')
-    html_str = mpld3.fig_to_html(fig)
-    html_file = open("index.html", "w")
-    html_file.write(html_str)
-    html_file.close()
-    return {html_str}
+#
+#
+# @router.put("/binseg_rbf/plot")
+# def binseg_rbf(breakpoints: int, data: RawData):
+#     points = np.array(data.val)
+#     # Binary segmentation search method, RBF segment model
+#     algo = rpt.Binseg(model="rbf").fit(points)
+#     bkps_i = algo.predict(n_bkps=breakpoints)
+#     bkps_ts = []
+#     for i in bkps_i[:-1]:
+#         bkps_ts.append(data.ts[i])
+#     fig, ax_array = rpt.display(points, bkps_i)
+#     plt.title('Binary Segmentation Search Method, RBF Segment Model')
+#     html_str = mpld3.fig_to_html(fig)
+#     html_file = open("index.html", "w")
+#     html_file.write(html_str)
+#     html_file.close()
+#     return {html_str}
 
 
 class GridMeta(BaseModel):
@@ -161,7 +161,7 @@ class ModelName(str, Enum):
 
 
 @router.post("/{search_method}/{model}/json")
-def binseg_rbf( breakpoints:    int,
+def changepoint_methods( breakpoints:    int,
                 search_method:  SearchMethod,
                 model:          ModelName,
                 data:           GridJson,
@@ -210,7 +210,7 @@ def binseg_rbf( breakpoints:    int,
 
 # Example of returning an HTML response with form to upload a file.
 @router.get("/")
-async def main():
+async def html_upload():
     content = """
 <body>
 <form action="/files/" enctype="multipart/form-data" method="post">
