@@ -44,6 +44,8 @@ The following URLs are used to access ORB resources:
 3. http://localhost/api/v1/docs    -   Swagger UI API Documentation
 4. http://localhost/api/v1/redoc   - Redoc UI API Documentation
 5. http://localhost/api/v1  -   API endpoint
+
+
 ## System specification
 
 1. **Data collection:** is assumed to have been addressed through a data-warehousing method such as SkyFoundry's Skyspark or OSIsoft's PI applications. 

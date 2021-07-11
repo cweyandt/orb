@@ -136,3 +136,5 @@ data/*
 pipeline/nginx/nginx.conf
 !README.md
 .idea/
+orb/count/influx_host.ini
+orb/count/influx_host.ini

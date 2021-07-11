@@ -19,7 +19,7 @@ class RawData(BaseModel):
     ts: List[datetime]
     val: List[float]
 
-
+# TODO: Make this function generic
 @router.put("/binseg_rbf")
 def binseg_rbf(breakpoints: int, data: RawData):
     points = np.array(data.val)
@@ -31,7 +31,7 @@ def binseg_rbf(breakpoints: int, data: RawData):
         bkps_ts.append(data.ts[i])
     return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
 #
-#
+# TODO: Serve back the plot as a png?
 # @router.put("/binseg_rbf/plot")
 # def binseg_rbf(breakpoints: int, data: RawData):
 #     points = np.array(data.val)
@@ -88,6 +88,7 @@ class GridJson(BaseModel):
     rows: List[GridRows]
 
     # Example Haystack Grid object as JSON
+    # TODO: Fix example GRID so that it works in Swagger/Redoc
     class Config:
         schema_extra = {
             "example": {

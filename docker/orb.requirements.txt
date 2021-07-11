@@ -12,3 +12,4 @@ pyhaystack
 ruptures
 mpld3
 python-multipart
+influxdb

@@ -50,7 +50,7 @@ reload = True
 
 # For debugging and testing
 log_data = {
-    "loglevel": "debug", # TODO:: change back to: loglevel,
+    "loglevel": "debug", # TODO:: change back to: loglevel, this doesn't even seem to work
     "workers": workers,
     "bind": bind,
     "graceful_timeout": graceful_timeout,
