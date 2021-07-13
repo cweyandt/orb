@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Bootstrap 4 project documentation theme for developers</title>
+    <title>ORB API Quick Start</title>
     <!-- Meta -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -59,7 +59,7 @@
             <div class="container">
                 <div id="doc-header" class="doc-header text-center">
                     <h1 class="doc-title"><i class="icon fa fa-paper-plane"></i> Quick Start</h1>
-                    <div class="meta"><i class="far fa-clock"></i> Last updated: Oct 12th, 2020</div>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Jul 12th, 2021</div>
                 </div><!--//doc-header-->
                 <div class="doc-body row">
                     <div class="doc-content col-md-9 col-12 order-1">
@@ -67,22 +67,48 @@
                             <section id="data-collection" class="doc-section">
                                 <h2 class="section-title">Data Collection</h2>
                                 <div class="section-block">
-                                    <p>Fill this in with how the data is collected with Sky Spark or similar tools.
+                                    <p>Collect WiFi time series data with Sky Spark or similar tools.
+                                    </p>
+                                    <p>Clone the <a href="https://github.com/cweyandt/orb">Orb git repo</a> onto your local machine.
                                     </p>
                                 </div>
                             </section><!--//doc-section-->
                             <section id="data-cleaning" class="doc-section">
                                 <h2 class="section-title">Data Cleaning</h2>
                                 <div class="section-block">
-                                    <p>Give Examples here of how the data should look going in to the API.
+                                    <p>Data will need to be in a pkl file format with each row as one time series unit. The columns may be different wifi hotspot locations counting connections.
+                                    </p>
+                                </div>
+                                <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/pkl.png" alt="screenshot" /></a>
+                                </div> 
+                                <div class="section-block">
+                                    <p>The data should be placed in the ./data/cleaned/ directory of the ORB repository. The default name is "wifi_ap_data.pkl" This can be changed in the jupyterlab notebook later if desired.
                                     </p>
                                 </div>
                             </section><!--//doc-section-->
                             <section id="run-api" class="doc-section">
                                 <h2 class="section-title">Run API</h2>
                                 <div class="section-block">
-                                    <p>This is where the actual API documentation goes - generate this with Fast API and put it here.
+                                    <p>Make sure you have <a href="https://docs.docker.com/get-docker/">Docker</a> installed.
                                     </p>
+                                    <p>In your terminal, change directory to the repository:                                        
+                                    </p>
+                                    <code>cd orb</code>
+                                    <br><br><p>Build the docker images:                                        
+                                    </p>
+                                    <code>docker compose build</code>
+                                    <br><br><p>Start the docker containers in detached mode:</p>
+                                    <code>docker compose up -d</code>
+                                    <br><br><p>View container logs</p>
+                                    <code>docker compose logs</code>- view existing logs for all containers<br>
+                                    <code>docker compose logs -f</code>- stream new logs for all containers (CTRL+C to exit)<br>
+                                    <code>docker compose logs -f orb</code>- stream logs for a specific container [orb, nginx, jupyter]<br>
+                                    <br><br><p>Stop the ORB applications:</p>
+                                    <code>docker compose down</code>
+                                    <br><br><p>Open the API using the token provided in your terminal:</p>
+                                    <p><a href="http://localhost/api/v1/docs">Swagger UI API Documentation</a></p>
+                                    <p><a href="http://localhost/api/v1/redoc">Redoc UI API Documentation</a></p>
                                 </div>
                             </section><!--//doc-section-->
                             <section id="profit" class="doc-section">

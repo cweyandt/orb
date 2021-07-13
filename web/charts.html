@@ -73,6 +73,30 @@
                                 <div class="section-block">
                                     <h3 class="block-title">2. Details</h3>
                                     <p>Details of how the API sections work.</p>
+
+                                        <h4 class="section-title">How to Run API</h4>
+                                        <div class="section-block">
+                                            <p>Make sure you have <a href="https://docs.docker.com/get-docker/">Docker</a> installed.
+                                            </p>
+                                            <p>In your terminal, change directory to the repository:                                        
+                                            </p>
+                                            <code>cd orb</code>
+                                            <br><br><p>Build the docker images:                                        
+                                            </p>
+                                            <code>docker compose build</code>
+                                            <br><br><p>Start the docker containers in detached mode:</p>
+                                            <code>docker compose up -d</code>
+                                            <br><br><p>View container logs</p>
+                                            <code>docker compose logs</code>- view existing logs for all containers<br>
+                                            <code>docker compose logs -f</code>- stream new logs for all containers (CTRL+C to exit)<br>
+                                            <code>docker compose logs -f orb</code>- stream logs for a specific container [orb, nginx, jupyter]<br>
+                                            <br><br><p>Stop the ORB applications:</p>
+                                            <code>docker compose down</code>
+                                            <br><br><p>Open the API using the token provided in your terminal:</p>
+                                            <p><a href="http://localhost/api/v1/docs">Swagger UI API Documentation</a></p>
+                                            <p><a href="http://localhost/api/v1/redoc">Redoc UI API Documentation</a></p>
+                                        </div>
+
                                 </div><!--//section-block-->                        
                             
                         </div><!--//content-inner-->
