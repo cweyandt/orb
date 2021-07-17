@@ -12,7 +12,7 @@ services:
       context: ./
       dockerfile: docker/orb.dockerfile
     volumes:
-      - "./orb:/app"
+      - "./src:/app"
     expose:
       - "80"
     ports:

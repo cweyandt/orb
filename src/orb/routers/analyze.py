@@ -11,43 +11,13 @@ from matplotlib import pyplot as plt
 import mpld3
 
 router = APIRouter(
-    prefix="/models",
-    tags=["models"]
+    prefix="/analyze",
+    tags=["analyze"]
 )
 
 class RawData(BaseModel):
     ts: List[datetime]
     val: List[float]
-
-# TODO: Make this function generic
-@router.put("/binseg_rbf")
-def binseg_rbf(breakpoints: int, data: RawData):
-    points = np.array(data.val)
-    # Binary segmentation search method, RBF segment model
-    algo = rpt.Binseg(model="rbf").fit(points)
-    bkps_i = algo.predict(n_bkps=breakpoints)
-    bkps_ts = []
-    for i in bkps_i[:-1]:
-        bkps_ts.append(data.ts[i])
-    return {"bkps_i": bkps_i, "bkps_ts": bkps_ts}
-#
-# TODO: Serve back the plot as a png?
-# @router.put("/binseg_rbf/plot")
-# def binseg_rbf(breakpoints: int, data: RawData):
-#     points = np.array(data.val)
-#     # Binary segmentation search method, RBF segment model
-#     algo = rpt.Binseg(model="rbf").fit(points)
-#     bkps_i = algo.predict(n_bkps=breakpoints)
-#     bkps_ts = []
-#     for i in bkps_i[:-1]:
-#         bkps_ts.append(data.ts[i])
-#     fig, ax_array = rpt.display(points, bkps_i)
-#     plt.title('Binary Segmentation Search Method, RBF Segment Model')
-#     html_str = mpld3.fig_to_html(fig)
-#     html_file = open("index.html", "w")
-#     html_file.write(html_str)
-#     html_file.close()
-#     return {html_str}
 
 
 class GridMeta(BaseModel):
