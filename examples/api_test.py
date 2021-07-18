@@ -1,11 +1,8 @@
-from datetime import datetime
+import json
 from pprint import pprint
 
 import requests
-import pandas as pd
-import numpy as np
-from matplotlib import pyplot as plt
-import json
+
 
 def printResponse(res):
     print("Response:\t" + str(res))
@@ -33,12 +30,14 @@ headers = {'Content-type': 'application/json'}
 
 
 url = 'http://localhost/api/v1/models/kernel/l2/json'
+url = 'http://localhost/api/v1/analyze/json'
+
 # Open the skyspark_grid.json file
 with open("../01_ETL/skyspark_grid.json") as file:
     # Load its content and make a new dictionary
     data = json.load(file)
 
-params = {"breakpoints": 10}
+params = {"groupby": "date"}
 
 response = requests.post(url, headers=headers, json=data, params=params)
 printResponse(response)
