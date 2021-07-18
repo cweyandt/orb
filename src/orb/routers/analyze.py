@@ -27,6 +27,7 @@ def timeFinder(points, dailyThreshold=0.9):
         try:
             sums[points.index[i]] = points[i:].cumsum()
         except ValueError:
+            print (str(ValueError) + " in timeFinder")
             return {"start": None, "end": None}
 
         lens[points.index[i]] = ([0] * i) + list(range(0, points.size - i))
@@ -49,8 +50,6 @@ def analyze(sensorData,
             dailyThreshold=0.9,
             overallThreshold=0.9):
 
-    print("Analyzing")
-
     sensorData = normalize(sensorData)
 
     startDatetimes = {}
@@ -64,13 +63,17 @@ def analyze(sensorData,
         else:
             raise ValueError('Illegal group argument: must be "day" or "date" to proceed.')
 
-        if dateString not in startDatetimes:
-            startDatetimes[dateString] = []
-            endDatetimes[dateString] = []
-
         times = timeFinder(date, dailyThreshold)
-        startDatetimes[dateString].append(times["start"])
-        endDatetimes[dateString].append(times["end"])
+
+        if times["start"] != None:
+            if dateString not in startDatetimes:
+                startDatetimes[dateString] = []
+                endDatetimes[dateString] = []
+            startDatetimes[dateString].append(times["start"])
+            endDatetimes[dateString].append(times["end"])
+
+    if startDatetimes == {}:
+        return {"error":"No breakpoints found"}
 
     if groupby == "date":
         results = pd.concat([pd.DataFrame(startDatetimes), pd.DataFrame(endDatetimes)]).transpose()
@@ -103,8 +106,11 @@ def analyze_json(data: GridJson,
             dailyThreshold: Optional[float] = 0.9,
             overallThreshold: Optional[float] = 0.9
             ):
+    data = gridToDataframe(data)
 
-    print(gridToDataframe(data))
-    results = analyze(gridToDataframe(data), groupby, dailyThreshold, overallThreshold)
-    print("Processed")
-    return results
+    try:
+        results = analyze(data, groupby, dailyThreshold, overallThreshold)
+    except Exception as error:
+        return {"error_text": str(error)}
+    else:
+        return results

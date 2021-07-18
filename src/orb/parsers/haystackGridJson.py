@@ -19,36 +19,43 @@ import pyhaystack
 from pydantic import BaseModel
 
 
+# class HaystackGridJson(BaseModel):
+#     _kind: str
+#     meta: Dict[str, Union[str, int, Dict]]
+#     cols: List[{name: str
+#                 meta: Optional[Dict[str, Union[str, int, Dict]]]}]
+#     rows: List[{ts: {_kind: str
+#                      tz: str
+#                      val: datetime},
+#                 v0: Union[{_kind: str
+#                            val: Union[int, float, str]
+#                            unit: Optional[str] = None}, float]}]
+
 class GridMeta(BaseModel):
     ver: str
     dis: str
-    view: str
+    view: Optional[str]
     hisStart: Dict[str, str]
     hisEnd: Dict[str, str]
-    hisLimit: int
-
+    hisLimit: Optional[int]
 
 class GridCols(BaseModel):
     name: str
-    meta: Dict[str, Union[str, int, Dict]]
-
+    meta: Optional[Dict[str, Union[str, int, Dict]]]
 
 class GridTS(BaseModel):
     _kind: str
     tz: str
     val: datetime
 
-
 class GridVal(BaseModel):
     _kind: str
     val: Union[int, float, str]
     unit: Optional[str] = None
 
-
 class GridRows(BaseModel):
     ts: GridTS
     v0: Union[GridVal, float]
-
 
 class GridJson(BaseModel):
     _kind: str
@@ -89,7 +96,6 @@ class GridJson(BaseModel):
             }
         }
 
-
 def parseHaystackGrid(data: GridJson):
     ts = []
     val = []
@@ -103,24 +109,19 @@ def parseHaystackGrid(data: GridJson):
     val = np.array(val)
     return ts, val
 
-
 def gridToDataframe(data: GridJson):
     ts = []
     val = []
-    print("Data type: " + str(type(data)))
     for row in data.rows:
         ts.append(row.ts.val)
         try:
             val.append(row.v0.val)
         except AttributeError:  # Deal with unitless value columns
             val.append(row.v0)
-    # ts = np.array(ts)
-    # val = np.array(val)
-    df = pd.DataFrame({"date":ts, "val":val}).set_index("date")
-    df.index = pd.DatetimeIndex(pd.to_datetime(df.index, utc=True).tz_convert("US/Pacific"))
-
+    df = pd.Series(val)
+    df.index = pd.DatetimeIndex(pd.to_datetime(ts, utc=True)).tz_convert("US/Pacific").tz_localize(None)
+    df = df.replace(0, np.nan).fillna(method='ffill')
     return df
-
 
 def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
     grid = {"_kind": "grid", "meta": {"ver": "3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},

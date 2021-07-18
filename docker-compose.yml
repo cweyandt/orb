@@ -13,6 +13,7 @@ services:
       dockerfile: docker/orb.dockerfile
     volumes:
       - "./src:/app"
+      - "./data:/data"
     expose:
       - "80"
     ports:
