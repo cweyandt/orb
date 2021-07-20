@@ -1,3 +1,11 @@
+import datetime as dt
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from prophet import Prophet
+import ruptures as rpt
+from scipy import integrate
+
 def normalize(data):
   """
   Purpose:
