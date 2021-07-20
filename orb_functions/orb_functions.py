@@ -176,7 +176,7 @@ def predict(data, days = 30, groupby = "date", dailyThreshold = 0.9, overallThre
     Pandas Dataframe of suggested start and end times, indexed by date or day of week depending on arguments
   """
 
-  periods = days * 144
+  periods = days * 288
   data = normalize(data)
 
   m = Prophet(weekly_seasonality=True)
