@@ -103,7 +103,7 @@ router = APIRouter(
 @router.post("/json")
 def analyze_json(data: GridJson,
                  level: Optional[str] = "stream",
-                 groupby: Optional[str] = "day",
+                 groupby: Optional[str] = "date",
                  dailyThreshold: Optional[float] = 0.9,
                  overallThreshold: Optional[float] = 0.9
                  ):
