@@ -36,13 +36,15 @@ def analyze_json(data: GridJson,
 
     # if results != {}:
     for date, start in results["start"].items():
-        if start != pd.NaT:
-            ts = to_datetime(str(date) + " " + str(start))
+        if not pd.isnull(start):
+            # ts = to_datetime(str(date) + " " + str(start))
+            ts = str(start)
             changepoints[ts] = "true"
             print(ts)
     for date, end in results["end"].items():
-        if end != pd.NaT:
-            ts = to_datetime(str(date) + " " + str(end))
+        if not pd.isnull(end):
+            # ts = to_datetime(str(date) + " " + str(end))
+            ts = str(end)
             print (ts)
             changepoints[ts] = "false"
 

@@ -61,10 +61,10 @@ def timeFinder(points, threshold=0.9):
     startTime = ratios.min().idxmin()
     endTime = ratios.min(axis=1).idxmin()
 
-    start = pd.NaT if pd.isnull(startTime) else startTime.time()
-    end = pd.NaT if pd.isnull(endTime) else endTime.time()
+    # start = pd.NaT if pd.isnull(startTime) else startTime.time()
+    # end = pd.NaT if pd.isnull(endTime) else endTime.time()
 
-    return {"start": start, "end": end}
+    return {"start": startTime, "end": endTime}
 
 
 def dateAnalyzer(data, threshold=0.9):
