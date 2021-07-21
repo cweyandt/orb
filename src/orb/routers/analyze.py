@@ -4,6 +4,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter
+from pandas import to_datetime
 
 from ..parsers.haystackGridJson import GridJson, gridToDataframe, seriesToHaystackGrid
 from ..orb_functions.orb_functions import normalize, timeFinder, analyze
@@ -36,12 +37,16 @@ def analyze_json(data: GridJson,
     # if results != {}:
     for date, start in results["start"].items():
         if start != pd.NaT:
-            changepoints[str(date) + " " + str(start)] = "true"
+            ts = to_datetime(str(date) + " " + str(start))
+            changepoints[ts] = "true"
+            print(ts)
     for date, end in results["end"].items():
         if end != pd.NaT:
-            changepoints[str(date) + " " + str(end)] = "false"
+            ts = to_datetime(str(date) + " " + str(end))
+            print (ts)
+            changepoints[ts] = "false"
 
-    changepoints = changepoints.sort_index()
+    # changepoints = changepoints.sort_index()
 
     return seriesToHaystackGrid(data, changepoints)
     # return changepoints
