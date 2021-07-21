@@ -29,15 +29,17 @@ def analyze_json(data: GridJson,
     except Exception as error:
         return {"error_text": str(error)}
 
+    print (results)
+
     changepoints = pd.Series()
 
     # if results != {}:
     for date, start in results["start"].items():
         if start != pd.NaT:
-            changepoints[str(date) + "T" + str(start)] = "true"
+            changepoints[str(date) + " " + str(start)] = "true"
     for date, end in results["end"].items():
         if end != pd.NaT:
-            changepoints[str(date) + "T" + str(end)] = "false"
+            changepoints[str(date) + " " + str(end)] = "false"
 
     changepoints = changepoints.sort_index()
 
