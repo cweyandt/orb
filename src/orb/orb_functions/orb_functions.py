@@ -16,6 +16,8 @@ def normalize(data):
     Pandas Series with normalized time series data
   """
 
+    print("in normalize...")
+
     for idx, date in data.groupby(data.index.date):
         dateString = date.index[0].strftime('%Y-%m-%d')
         data[dateString] = data[dateString] - date.min()
@@ -35,6 +37,8 @@ def timeFinder(points, threshold=0.9):
   Returns:
     Dictionary with suggested start and end time for the given date
   """
+
+    print("in timeFinder...")
 
     sums, lens, ratios = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
@@ -75,7 +79,7 @@ def dateAnalyzer(data, threshold=0.9):
   Returns:
     Pandas Dataframe of suggested start and end times, indexed by date
   """
-
+    print( "in dateAnalyzer...")
     data = normalize(data)
 
     startDatetimes = {}
@@ -110,6 +114,8 @@ def dayAnalyzer(data, threshold=0.9):
   Returns:
     Pandas Dataframe of suggested start and end times, indexed by day of week
   """
+
+    print("in dayAnalyzer...")
 
     startTimes = {"Sun": [], "Mon": [], "Tue": [], "Wed": [], "Thu": [], "Fri": [], "Sat": []}
     endTimes = {"Sun": [], "Mon": [], "Tue": [], "Wed": [], "Thu": [], "Fri": [], "Sat": []}
@@ -150,7 +156,7 @@ def analyze(data, level, groupby="day", dailyThreshold=0.9, overallThreshold=0.9
   Returns:
     Pandas Dataframe of suggested start and end times, indexed by date or day of week depending on arguments
   """
-
+    print ("in analyze...")
     if level == "stream" and groupby == "day":
         return dayAnalyzer(dateAnalyzer(data, threshold=dailyThreshold), threshold=overallThreshold)
 
