@@ -150,9 +150,7 @@ def seriesToHaystackGrid(data: GridJson, changepoints):
             "rows": []
             }
 
-
-    for ts, val in changepoints.items():
+    for ts, val in changepoints.sort_index().items():
         grid["rows"].append({"ts": {"_kind": "dateTime", "tz": tz, "val": ts},
                              "v0": val})
-
     return grid
