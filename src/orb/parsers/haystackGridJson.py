@@ -137,3 +137,22 @@ def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
 
     grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower()})  # Initialize last point from hisEnd
     return grid
+
+def seriesToHaystackGrid(data: GridJson, changepoints):
+    # hisStart = changepoints.index[0]
+    # hisEnd = changepoints.index[-1]
+    # tz = "Los_Angeles"
+    hisStart = data.meta.hisStart
+    hisEnd = data.meta.hisEnd
+    tz = data.meta.hisStart["tz"]
+    grid = {"_kind": "grid", "meta": {"ver": "3.0", "hisStart": hisStart, "hisEnd": hisEnd},
+            "cols": [{"name": "ts"}, {"name": "v0", "kind": "Bool"}],
+            "rows": []
+            }
+
+
+    for ts, val in changepoints.items():
+        grid["rows"].append({"ts": {"_kind": "dateTime", "tz": tz, "val": ts},
+                             "v0": val})
+
+    return grid

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter
 
-from ..parsers.haystackGridJson import GridJson, gridToDataframe
+from ..parsers.haystackGridJson import GridJson, gridToDataframe, seriesToHaystackGrid
 
 router = APIRouter(
     prefix="/analyze",
@@ -27,7 +27,7 @@ def timeFinder(points, dailyThreshold=0.9):
         try:
             sums[points.index[i]] = points[i:].cumsum()
         except ValueError:
-            print (str(ValueError) + " in timeFinder")
+            print(str(ValueError) + " in timeFinder")
             return {"start": None, "end": None}
 
         lens[points.index[i]] = ([0] * i) + list(range(0, points.size - i))
@@ -49,7 +49,6 @@ def analyze(sensorData,
             groupby="day",
             dailyThreshold=0.9,
             overallThreshold=0.9):
-
     sensorData = normalize(sensorData)
 
     startDatetimes = {}
@@ -73,7 +72,7 @@ def analyze(sensorData,
             endDatetimes[dateString].append(times["end"])
 
     if startDatetimes == {}:
-        return {"error":"No breakpoints found"}
+        return {"error": "No breakpoints found"}
 
     if groupby == "date":
         results = pd.concat([pd.DataFrame(startDatetimes), pd.DataFrame(endDatetimes)]).transpose()
@@ -102,15 +101,26 @@ def analyze(sensorData,
 
 @router.post("/json")
 def analyze_json(data: GridJson,
-            groupby: Optional[str] = "day",
-            dailyThreshold: Optional[float] = 0.9,
-            overallThreshold: Optional[float] = 0.9
-            ):
-    data = gridToDataframe(data)
+                 groupby: Optional[str] = "day",
+                 dailyThreshold: Optional[float] = 0.9,
+                 overallThreshold: Optional[float] = 0.9
+                 ):
+    data_df = gridToDataframe(data)
 
     try:
-        results = analyze(data, groupby, dailyThreshold, overallThreshold)
+        results = analyze(data_df, groupby, dailyThreshold, overallThreshold)
     except Exception as error:
         return {"error_text": str(error)}
-    else:
-        return results
+
+    changepoints = pd.Series()
+
+    # if results != {}:
+    for start in results["start"].values:
+        changepoints[start] = "true"
+    for end in results["end"].values:
+        changepoints[end] = "false"
+
+    changepoints = changepoints.sort_index()
+
+    return seriesToHaystackGrid(data, changepoints)
+    # return changepoints
