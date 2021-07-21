@@ -33,9 +33,11 @@ def analyze_json(data: GridJson,
 
     # if results != {}:
     for date, start in results["start"].items():
-        changepoints[str(date) + "T" + str(start)] = "true"
+        if start != pd.NaT:
+            changepoints[str(date) + "T" + str(start)] = "true"
     for date, end in results["end"].items():
-        changepoints[str(date) + "T" + str(end)] = "false"
+        if end != pd.NaT:
+            changepoints[str(date) + "T" + str(end)] = "false"
 
     changepoints = changepoints.sort_index()
 
