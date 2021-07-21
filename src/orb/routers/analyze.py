@@ -8,10 +8,40 @@ from fastapi import APIRouter
 from ..parsers.haystackGridJson import GridJson, gridToDataframe, seriesToHaystackGrid
 from ..orb_functions.orb_functions import normalize, timeFinder, analyze
 
+
 router = APIRouter(
     prefix="/analyze",
     tags=["analyze"]
 )
+
+
+@router.post("/json")
+def analyze_json(data: GridJson,
+                 level: Optional[str] = "stream",
+                 groupby: Optional[str] = "date",
+                 dailyThreshold: Optional[float] = 0.9,
+                 overallThreshold: Optional[float] = 0.9
+                 ):
+    data_df = gridToDataframe(data)
+
+    try:
+        results = analyze(data_df, level, groupby, dailyThreshold, overallThreshold)
+    except Exception as error:
+        return {"error_text": str(error)}
+
+    changepoints = pd.Series()
+
+    # if results != {}:
+    for date, start in results["start"].items():
+        changepoints[str(date) + "T" + str(start)] = "true"
+    for date, end in results["end"].items():
+        changepoints[str(date) + "T" + str(end)] = "false"
+
+    changepoints = changepoints.sort_index()
+
+    return seriesToHaystackGrid(data, changepoints)
+    # return changepoints
+
 
 #
 # def normalize(sensorData):
@@ -98,31 +128,3 @@ router = APIRouter(
 #
 #     results.columns = ["start", "end"]
 #     return results
-
-
-@router.post("/json")
-def analyze_json(data: GridJson,
-                 level: Optional[str] = "stream",
-                 groupby: Optional[str] = "date",
-                 dailyThreshold: Optional[float] = 0.9,
-                 overallThreshold: Optional[float] = 0.9
-                 ):
-    data_df = gridToDataframe(data)
-
-    try:
-        results = analyze(data_df, level, groupby, dailyThreshold, overallThreshold)
-    except Exception as error:
-        return {"error_text": str(error)}
-
-    changepoints = pd.Series()
-
-    # if results != {}:
-    for start in results["start"].values:
-        changepoints[start] = "true"
-    for end in results["end"].values:
-        changepoints[end] = "false"
-
-    changepoints = changepoints.sort_index()
-
-    return seriesToHaystackGrid(data, changepoints)
-    # return changepoints
