@@ -30,17 +30,21 @@ headers = {'Content-type': 'application/json'}
 
 
 url = 'http://localhost/api/v1/models/kernel/l2/json'
-url = 'http://localhost/api/v1/analyze/json'
 dataFile = "../01_ETL/skyspark_grid.json"
+params = {"breakpoints": 10}
+
+url = 'http://localhost/api/v1/analyze/json'
 dataFile = "../examples/wifi_sample.json"
+params = {"groupby": "date"}
+# params = {"groupby": "day"}
 
 # Open the skyspark_grid.json file
 with open(dataFile) as file:
     # Load its content and make a new dictionary
     data = json.load(file)
 
-params = {"groupby": "date"}
-# params = {"groupby": "day"}
+
+
 
 response = requests.post(url, headers=headers, json=data, params=params)
 printResponse(response)
