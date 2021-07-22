@@ -50,7 +50,7 @@ def analyze_json(data: GridJson,
 
     # changepoints = changepoints.sort_index()
 
-    changepoints.index = pd.DatetimeIndex(pd.to_datetime(changepoints.index, utc=True)).tz_convert("US/Pacific")
+    changepoints.index = pd.DatetimeIndex(pd.to_datetime(changepoints.index)).tz_localize("US/Pacific")
 
     print(changepoints)
 
