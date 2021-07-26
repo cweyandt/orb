@@ -1,0 +1,76 @@
+(orbTest: @p:devSBL:r:2885a3d4-35e7ceea, span: pastWeek(), rollup: 5min,
+    search:"ORBanalyer",
+    model:"rbf", breakpoints:10,   // Apply to CPD methods
+    dailyThreshold: 0.9, overallThreshold: 0.9,   //apply to ORBanalyzer
+    width:40, min_size:3, step:5) => do  // apply to some CPD methods
+
+
+
+  if (isRef(orbTest)) orbTest=readById(orbTest)
+
+  // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+  if (not(orbTest.has("orbTest")))
+    return {error: "No corresponding Test configuration found"}
+           .toGrid()
+
+  // Get building dis
+  try do
+    building: xReadById(orbTest->buildingRef)->dis
+  catch (ex) do
+    return ex
+  end
+
+  // Gather list of floor numbers to include in the query
+  floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+
+  // Check whether test results have already been calculated for this span
+  if (orbTest.missing("hisEnd"))
+    orbTest.hisSyncOrbTest(span)
+
+  if (orbTest.has("hisEnd"))
+    if (orbTest->hisEnd.date < span.end())
+      orbTest.hisSyncOrbTest(span)
+
+  // Read test results from orbTest his
+  occGrid: orbTest.hisRead(span)
+
+  // Collect status history for each AHU referenced in orbTest ahuRefs[]
+  xQueryList: orbTest->ahuRefs.map(
+      ahuRef => {ahuRef: ahuRef,
+                 hisFunc: "anAhuStatusHis(@" + ahuRef + ", " + toAxonCode(span) + ")"})
+
+  ahuHisList: xQueryList.map xQuery => do
+    // Collect his from AHU
+    ahuRef: xQuery->ahuRef
+    ahuDis: xReadById(xQuery->ahuRef).dis
+
+    ahuHis: xq().xqProjs("lbnl")
+                .xqEval(xQuery->hisFunc)
+                .xqExecute
+                .first
+              .addColMeta("v0", { ahuRef: ahuRef,
+                                  ahuDis: ahuDis })
+    // Calculate enumerated history
+    ahuEvalHis: hisCalcAhuOccStates(ahuHis, occGrid)
+              .addColMeta("v0", { ahuRef: ahuRef,
+                                  ahuDis: ahuDis})
+
+    {ahuRef: ahuRef, ahuDis: ahuDis, ahuHis: ahuHis, ahuEvalHis: ahuEvalHis}
+    end
+
+  return ahuHisList
+
+  hisGrid = hisGrid.addMeta({title: "Change Point Detection Results using '"+search+"' search with '"+model+"' model and "+breakpoints+" breakpoints."})
+
+
+  return hisJoin([hisGrid, overVent, underVent])
+
+end
+
+/*
+x,y,chartType,chartGroup,dis,color,strokeWidth,yAxisPosition,opacity,chartAreaMode,yAxisMax,yAxisVisible
+"ts","v0","line","g0","B91 Total Occupancy Sensors ON","#e74c3c",2.5,"left",,,,
+"ts",@p:lbnl:r:25b22896-132cd609,"line","g0","Real HVAC Schedule","#3498db",,"right",0.2,"axisMin",0.2kW,F
+"ts","v1","runtime","g0","ORB Occupancy Estimate","#e74c3c",,,,,,
+
+*/

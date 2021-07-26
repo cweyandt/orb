@@ -1,0 +1,3 @@
+(ahuRef:@p:lbnl:r:26693dbc-af6f1a61, span: pastWeek(), proj: "lbnl") => do
+  xq().xqProjs(proj).xqEval("anAhuStatusHis(@" + ahuRef + "," + toAxonCode(span) + ")").xqExecute.first
+end
