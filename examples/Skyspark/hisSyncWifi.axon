@@ -1,0 +1,128 @@
+/*------------------------------------------------------------------------------
+  Copyright 2021 Chris Weyandt
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+------------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------
+  Basic connection function for influxdb using basic authentication.
+
+  Arguments:
+
+------------------------------------------------------------------------------*/
+
+/*
+
+-----
+https://stackhub.org/package/afHttpClientExt
+
+Use the core Axon function passwordSet() to securely set
+your password in the current project's password store.
+passwordSet() may be called manually at any point in time
+using a known Ref:
+
+passwordSet(@xxxx-xxxx, "secretPassword")
+
+Then, in your HTTP code, pass the same Ref to afHttpAuth
+and the password will be retrieved from the project's
+password store:
+
+afHttpAuth("basic", "user", @xxxx-xxxx)
+afHttpGet(`http://example.com/secret.txt`)
+
+This keeps secrets safe from prying eyes!
+-----
+*/
+
+(wifiApRec: null, restart: null, connRef: @p:devSBL:r:288077be-7e22d3b4) => do
+  // Convert from reference to record if reference is given
+  if (isRef(wifiApRec)) wifiApRec=readById(wifiApRec)
+
+    // Exit if required tags are missing
+  if (wifiApRec.missing("wifiApName"))
+    throw "Record is missing a required tag \"wifiApName\" for connInfluxWifi"
+
+  // Process restart
+  if (isDateTime(restart)) do
+    wifiApRec.hisRemove(restart..now())
+    startTs: restart
+  // If restart not provided, determine earliest hisEnd
+  end else do
+    try startTs: wifiApRec->hisEnd
+    catch throw "restart argument not provided and point is missing "
+                + "hisEnd and requires backfilling"
+  end
+  startMillis: (startTs.toJavaMillis("UTC")*1000).to("s").as("1").format("0")
+  startMillis = [startMillis, "ms"].concat
+
+  // Configure connection
+  method: "GET"
+  // headers: {"Accept": "application/json"}
+  headers: {"Accept": "application/csv"}
+  body: null
+
+  query0: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = 'ap135-1-119b-r242') AND time >= 1626066000000ms GROUP BY time(5m) fill(0) ORDER BY time DESC"
+
+  query1: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = '"
+  // ap135-1-119b-r242
+  query2: "') AND time >= "
+  // 1626066000000ms
+  query3: " GROUP BY time(5m) fill(0) ORDER BY time DESC"
+  query: [query1, wifiApRec->wifiApName, query2, startMillis, query3].concat
+  // Build query uri string
+
+  influxQL_uri: [connRef->uri, """?db=""", connRef->influxDatabase, """&q=""", query].concat
+
+  // return [influxQL_uri, startMillis, now().toJavaMillis, 1626066000000ms]
+
+  try do
+    afHttpAuth("basic", connRef->influxUsername, connRef)
+    // -- Execute with afHttpExt --
+    afHttpRequest(method, ``+influxQL_uri, headers, body)
+    // afHttpRequest(method, ``+uri, headers, body)
+
+  catch (err) do
+        // perpetuate all other errors
+        afHttpResponse({safeNames})
+        throw err
+  end
+
+  res: afHttpResponse({safeNames})->body
+          .ioReadCsv()
+          .addCol("ts", (r => (r["time"].parseInt/1000000).fromJavaMillis))
+          .addCol("v0", (r => r["sum"].parseInt))
+          .removeCols(["name", "sum", "tags", "time"])
+          .sort((a,b)=> a->ts <=> b->ts)
+
+  res = res.reorderCols(res.colNames.moveTo("ts",0))
+
+  res.hisWrite(wifiApRec)
+
+  // If we got to this point, remove hisErr
+  commit(diff(wifiApRec, {-hisErr}, {transient}))
+
+  // Exit if empty read
+  // if (raw==null or isEmpty(raw)) throw "raw is empty"
+
+  // return {"hisStart": wifiApRec->hisStart, "hisEnd": wifiApRec->hisEnd, "written": size(res)}
+
+end
+
+
+
+
+/*------------------------------------------------------------------------------
+  Updates
+  2021-07-13  Chris Weyandt
+    Created.
+------------------------------------------------------------------------------*/

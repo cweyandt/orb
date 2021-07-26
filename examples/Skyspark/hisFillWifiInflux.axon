@@ -1,0 +1,53 @@
+/*
+  Copyright 2021 Chris Weyandt
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+*/
+/*
+  Backfill job for wifiAp device points
+*/
+
+(building: null) => do
+  targets: readAll(point and wifiAp and not disabled)
+
+  // Initialize exception counter
+  exCount: 0
+  skipCount: 0
+
+  // Cycle through each target equip,
+  targets.each ((target, i) => do
+    if (not target.has("hisEnd")) do
+      try do
+        // Call external function to sync trend data
+        connInfluxWifi(target, (now()-3yr))
+      end catch (ex)
+        exCount= exCount + 1
+      // jobSleep(1s)
+    else do
+      skipCount = skipCount + 1
+    end
+  end)
+
+  // Log number of exceptions and skipped points
+  if (exCount > 0 or skipCount > 0)
+    logInfo("hisFullInfluxWifi",
+            "Failed to update trends for " + exCount + " of " + targets.size
+            + " wifiAp devices. Skipped " + skipCount + " devices that already have hisEnd")
+end
+
+/*
+  Updates
+  2021-07-14  Chris Weyandt
+    Created.
+*/
