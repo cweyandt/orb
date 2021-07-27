@@ -204,3 +204,56 @@ def predict(data, days=30, groupby="date", dailyThreshold=0.9, overallThreshold=
 
     return analyze(predictedData, level="stream", groupby=groupby, dailyThreshold=dailyThreshold,
                    overallThreshold=overallThreshold)
+
+
+def addtoDict(dictName, date, val):
+  try: 
+    dictName[date] += val
+  except:
+    dictName[date] = val
+
+addtoDict(onVacant, 2, 100)
+
+def errorCalc(groundTruth, model):
+  '''
+  onVacant[date] = minutes when actually occupied but predicted vacant
+    This happens when the GT_True time happens before the model_True time OR when the GT_False time happens after the model_False time
+  offOccupied[date] = minutes when actually vacant but predicted occupied
+    This happens when the GT_True time happens after the model_True time OR when the GT_False time happens before the model_False time
+  For zero difference, don't add to either dictionary
+  '''
+  global onVacant
+  onVacant = dict()
+  global offOccupied 
+  offOccupied = dict()
+
+  #Find first entry of each that is True / Create first naive version where we assume indices are matched up
+  length = min(len(model_for_api), len(groundTruth))
+  for i in range(0,length):
+    date = groundTruth.index[i].date()
+    diff_days = (groundTruth.index.tz_localize(None)[i] - model_for_api.index[i]).days
+    diff_secs = (groundTruth.index.tz_localize(None)[i] - model_for_api.index[i]).seconds
+
+    if i % 2 == 0: #Even indices should be True
+      if diff_days < 0:
+        addtoDict(onVacant, date, (model_for_api.index[i] - groundTruth.index.tz_localize(None)[i]).seconds/60)
+        addtoDict(offOccupied, date, 0)
+      elif diff_secs > 0:
+        addtoDict(offOccupied, date, diff_secs/60)
+        addtoDict(onVacant, date, 0)
+      else: 
+        addtoDict(onVacant, date, 0)
+        addtoDict(offOccupied, date, 0)
+
+    elif i % 2 == 1:
+      if diff_days < 0:
+        addtoDict(offOccupied, date, (model_for_api.index[i] - groundTruth.index.tz_localize(None)[i]).seconds/60)
+        addtoDict(onVacant, date, 0)
+      elif diff_secs > 0:
+        addtoDict(onVacant, date, diff_secs/60)
+        addtoDict(offOccupied, date, 0)
+      else: 
+        addtoDict(onVacant, date, 0)
+        addtoDict(offOccupied, date, 0)
+
+    #return onVacant, offOccupied
