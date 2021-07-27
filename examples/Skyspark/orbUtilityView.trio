@@ -1,0 +1,136 @@
+id:@p:devSBL:r:2885327d-190fd9b8 "ORB Test Utility v2"
+dis:ORB Test Utility v2
+appName:occupancyApp
+mod:2021-07-18T22:47:23.902Z
+view:orbClickyFunTime
+src:
+  view: {inherit:"tile"}
+  layout: {var kind:"Str" defVal:"grid 4x3; 0 0 3 3; 3 0 1 2; 3 2 1 1"}
+  orbChart: Trio:
+    view: {inherit:"chart"}
+    uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+    rec: {var input binding:"../testList/selection"}
+    span: {var kind:"Span" input defExpr:"(lastWeek()).toSpan()"}
+    rollup: {dis:"Rollup (min)" var kind:"Number" input defVal:5min unitless}
+    searchMethod: {var enum:"none,binseg,window,dynamic,bottom_up,kernel" kind:"Str" input defVal:"bottom_up"}
+    model: {var enum:"rbf,l1,l2,linear" kind:"Str" input defVal:"rbf"}
+    breakpoints: {var kind:"Number" input defVal:10 unitless}
+    data: {expr:"viWifiChangePointV2( {{rec}}, {{span}}, {{rollup}}, {{searchMethod}}, {{model}}, {{breakpoints}} )"}
+  testList: Trio:
+    view: {inherit:"table" templateName:"orbTest"}
+    selection: {var kind:"Ref<orbTest>" bindSelect:"id"}
+    new: {action:"recNew"}
+    edit: {action:"recEdit"}
+    trash: {action:"recTrash"}
+    menu: {action:"uiContextMenu"}
+    data: {expr:"readAll(orbTest)"}
+  testResults: Trio:
+    view: {inherit:"fandoc"}
+    selectedTest: {var input binding:"../testList/selection"}
+    submit: {action:"recFormCommit"}
+    data: {expr:"\"ORB Test Results\\n################\\n\\nUnderventilation (minutes):  ###\\n\\nOverventilation (minutes):   ###\\n\\n\\n\\nread({{selectedTest}})\""}
+
+---
+id:@p:devSBL:r:2883bcbd-7ff028b0 "Wifi by Floor"
+dis:Wifi by Floor
+appName:occupancyApp
+mod:2021-07-16T04:18:03.217Z
+view:occWifiView
+src:
+  view: {inherit:"chart"}
+  site: {var kind:"Ref<site>" input defVal:@p:lbnl:r:2543b6e0-6ec3d354 navCluster}
+  span: {var kind:"Span" input defExpr:"(pastWeek()).toSpan()"}
+  stacked: {var kind:"Bool" input defVal:F}
+  uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+  data: {expr:"viWifiConnectionsByFloor({{site}}, {{span}}, {{stacked}})"}
+
+---
+id:@p:devSBL:r:28876c18-06764df5 "ORB Test Util v3"
+dis:ORB Test Util v3
+appName:occupancyApp
+mod:2021-07-21T19:40:59.786Z
+view:orbTestUtilV3
+src:
+  view: {inherit:"tile"}
+  layout: {var kind:"Str" defVal:"grid 4x3; 0 0 3 3; 3 0 1 2; 3 2 1 1"}
+  orbChart: Trio:
+    view: {inherit:"chart"}
+    uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+    rec: {var input binding:"../testList/selection"}
+    span: {var kind:"Span" input defExpr:"(lastWeek()).toSpan()"}
+    rollup: {dis:"Rollup (min)" var kind:"Number" input defVal:5min unitless}
+    searchMethod: {var enum:"none,binseg,window,dynamic,bottom_up,kernel,ORBanalyzer" kind:"Str" input defVal:"bottom_up"}
+    model: {var enum:"rbf,l1,l2,linear" kind:"Str" input defVal:"rbf"}
+    breakpoints: {var kind:"Number" input defVal:10 unitless}
+    data: {expr:"viWifiChangePointV3( {{rec}}, {{span}}, {{rollup}}, {{searchMethod}}, {{model}}, {{breakpoints}} )"}
+  testList: Trio:
+    view: {inherit:"table" templateName:"orbTest"}
+    selection: {var kind:"Ref<orbTest>" bindSelect:"id"}
+    new: {action:"recNew"}
+    edit: {action:"recEdit"}
+    trash: {action:"recTrash"}
+    menu: {action:"uiContextMenu"}
+    data: {expr:"readAll(orbTest)"}
+  testResults: Trio:
+    view: {inherit:"fandoc"}
+    selectedTest: {var input binding:"../testList/selection"}
+    submit: {action:"recFormCommit"}
+    data: {expr:"\"ORB Test Results\\n################\\n\\nUnderventilation (minutes):  ###\\n\\nOverventilation (minutes):   ###\\n\\n\\n\\nread({{selectedTest}})\""}
+
+---
+id:@p:devSBL:r:288b77f2-c13e0023 "ORB v4"
+dis:ORB v4
+appName:occupancyApp
+mod:2021-07-22T02:58:59.282Z
+view:orbTestUtilV4
+src:
+  view: {inherit:"tile"}
+  layout: {var kind:"Str" defVal:"grid 4x3; 0 0 3 3; 3 0 1 2; 3 2 1 1"}
+  orbChart: Trio:
+    view: {inherit:"chart"}
+    uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+    rec: {var input binding:"../testList/selection"}
+    span: {var kind:"Span" input defExpr:"(lastWeek()).toSpan()"}
+    rollup: {dis:"Rollup (min)" var kind:"Number" input defVal:5min unitless}
+    searchMethod: {var enum:"none,binseg,window,dynamic,bottom_up,kernel,ORBanalyzer" kind:"Str" input defVal:"bottom_up"}
+    model: {var enum:"rbf,l1,l2,linear" kind:"Str" input defVal:"rbf"}
+    breakpoints: {var kind:"Number" input defVal:10 unitless}
+    dailyThreshold: {var kind:"Number" input defVal:0.9 unitless}
+    data: {expr:"viWifiChangePointV4( {{rec}}, {{span}}, {{rollup}}, {{searchMethod}}, {{model}}, {{breakpoints}}, {{dailyThreshold}} )"}
+  testList: Trio:
+    view: {inherit:"table" templateName:"orbTest"}
+    selection: {var kind:"Ref<orbTest>" bindSelect:"id"}
+    new: {action:"recNew"}
+    edit: {action:"recEdit"}
+    trash: {action:"recTrash"}
+    menu: {action:"uiContextMenu"}
+    data: {expr:"readAll(orbTest)"}
+  testResults: Trio:
+    view: {inherit:"table"}
+    selectedTest: {var input binding:"../testList/selection"}
+    results: {var input binding:"../orbChart/var"}
+    data: {expr:"../orbChart/data"}
+
+---
+id:@p:devSBL:r:28551154-e0465980 "Updates"
+dis:Updates
+appName:archibus
+mod:2021-06-11T05:12:42.739Z
+view:archibusUpdates
+src:
+  view: {inherit:"table"}
+  siteRef: {var kind:"Ref<site>" input navCluster}
+  update: {dis:"Update SkySpark" refresh action:"recUpdateSkySparkSpaces" multi select}
+  data: {expr:"viArchibusUpdates({{siteRef}})"}
+
+---
+id:@p:devSBL:r:2853c32d-0ef40c6c "Matches"
+dis:Matches
+appName:archibus
+mod:2021-06-10T16:59:08.51Z
+view:archibusMatches
+src:
+  view: {inherit:"table"}
+  siteRef: {var kind:"Ref<site>" input navCluster}
+  pair: {dis:"Pair" refresh action:"recPairArchibusSpace" multi select}
+  data: {expr:"viArchibusMatches({{siteRef}})"}

@@ -1,0 +1,151 @@
+(orbTest: @p:devSBL:r:2884d787-e9ddfa20, span: pastWeek(), rollup: 5min,
+    search:"ORBanalyer",
+    model:"rbf", breakpoints:10,   // Apply to CPD methods
+    dailyThreshold: 0.9, overallThreshold: 0.9,   //apply to ORBanalyzer
+    width:40, min_size:3, step:5) => do  // apply to some CPD methods
+
+
+
+  if (isRef(orbTest)) orbTest=readById(orbTest)
+
+  // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+  if (not(orbTest.has("orbTest")))
+    return {error: "No corresponding Test configuration found"}
+           .toGrid()
+
+  // Get building dis
+  try do
+    building: xReadById(orbTest->buildingRef)->dis
+  catch (ex) do
+    return ex
+  end
+
+  // Gather list of floor numbers to include in the query
+  floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+
+  // Collect points for analysis
+  wifiApGrid: readAll(hisEnd and wifiApBuilding==building and not disabled)
+              .findAll(r => do
+                floor: r->wifiApFloor
+                if (isStr(floor)) floor = floor.parseNumber
+                floorList.contains(floor)
+              end)
+
+  // Aggregate points to a single timeseries
+  data: wifiApGrid.hisRead(span, {limit:null})
+                   .hisFoldCols(sum)
+                   //.hisRollup(max,rollup)
+                   .addColMeta("v0",  { "chartGroup":"g0",
+                                        "chartType": "line",
+                                        "strokeWidth":2,
+                                        "dis": "B" + building + " WiFi Connections"
+                                        })
+
+
+
+  // Prepare query
+  uri: """http://fmcs-svc-mgr.lbl.gov/api/v1/"""
+  method: "POST"
+  path: if (search=="ORBanalyzer") """analyze""" else ( """models""" + "/")
+  headers: {"Content-Type": "application/json"}
+  endpoint: "/json"
+
+  params: "?"
+  if (search=="binseg")
+    params = concat([params,"breakpoints=" + breakpoints.toStr()])
+  else if (search=="window")
+    params = concat([params,"breakpoints=" + breakpoints.toStr() +
+                             "&width=" + width.toStr()])
+  else if (search=="dynamic")
+    params = concat([params,"breakpoints=" + breakpoints.toStr() +
+                             "&min_size=" + min_size.toStr() +
+                             "&jump=" + step.toStr()])
+  else if (search=="bottom_up")
+    params = concat([params,"breakpoints=" + breakpoints.toStr() +
+                             "&min_size=" + min_size.toStr() +
+                             "&jump=" + step.toStr()])
+  else if (search=="kernel")
+    if (model=="linear")
+      params = concat([params,"breakpoints=" + breakpoints.toStr() +
+                             "&kernel=\"linear\"" +
+                             "&min_size=" + min_size.toStr() +
+                             "&jump=" + step.toStr()])
+    else
+      params = concat([params,"breakpoints=" + breakpoints.toStr() +
+                             "&kernel=\"rbf\"" +
+                             "&min_size=" + min_size.toStr() +
+                             "&jump=" + step.toStr()])
+  else if (search=="ORBanalyzer") do
+      params = concat([params,"dailyThreshold=" + dailyThreshold.toStr() +
+                             "&overallThreshold=" + overallThreshold.toStr()])
+  else
+    params = {}
+
+
+  query: ""
+  if (search=="ORBanalyzer") do
+    query = uri + path + endpoint + params
+  else
+    query = uri + path + search + "/" + model + endpoint + params
+
+
+
+  raw: null
+  res: null
+
+  // -- Execute with dcHttpExt --
+  if (not (search == "none")) do
+    raw = dcHttp(``+query, headers, data.ioWriteJson(""), method)
+    res = raw.ioReadJson()
+            .toGrid()
+            .addColMeta("v0", { "dis":"ORB Occupancy Estimate",
+                                "chartGroup":"g1"})
+    res = res.hisMap(v => v.parseBool())
+    // res = res.hisMap(v => if (v.parseBool()) 1% else 0%)
+
+  end
+
+  if (not res.equals(null))
+    hisGrid: hisJoin([data, res])
+  else
+    hisGrid: data
+
+
+  xQueryList: orbTest->ahuRefs.map(ahuRef => "anAhuStatusHis(@" + ahuRef + ", " + toAxonCode(span) + ")")
+
+  // xQuery2: """anAhuStatusHis(@p:lbnl:r:26693dbc-af6f1a61, pastWeek())"""
+  // return [xQuery, xQuery2]
+
+  refData: xQueryList.map(xQuery => xq().xqProjs("lbnl")
+                                         .xqEval(xQuery)
+                                         .xqExecute
+                                         .first
+                                     .addColMeta("v0", { "chartGroup":"g1"}))
+                      .hisJoin()
+
+  hisGrid = hisJoin([hisGrid, refData])
+
+  hisGrid = hisGrid.addMeta({title: "Change Point Detection Results using '"+search+"' search with '"+model+"' model and "+breakpoints+" breakpoints."})
+
+  // Find periods of overventilation and underventilation
+  // ***** TODO: add for loop and calculate per AHU in refData, wrap in try/catch
+  xor: [res.hisFindPeriods(x=>x), refData.hisFindPeriods(x=>x)].hisPeriodMatrix().findAll(v => v->numTrue==1)
+  overVent: xor.findAll(r => r->v1)
+  overVentSum: overVent.colToList("dur").fold(sum)
+  underVent: xor.findAll(r => r->v0)
+  underVentSum: underVent.colToList("dur").fold(sum)
+
+  hisGrid = hisGrid.addMeta({orbResults: {overVentSum: overVentSum, underVentSum: underVentSum}})
+  // ***** TODO: add overVent and underVent periods to hisGrid
+
+  return hisGrid
+
+end
+
+/*
+x,y,chartType,chartGroup,dis,color,strokeWidth,yAxisPosition,opacity,chartAreaMode,yAxisMax,yAxisVisible
+"ts","v0","line","g0","B91 Total Occupancy Sensors ON","#e74c3c",2.5,"left",,,,
+"ts",@p:lbnl:r:25b22896-132cd609,"line","g0","Real HVAC Schedule","#3498db",,"right",0.2,"axisMin",0.2kW,F
+"ts","v1","runtime","g0","ORB Occupancy Estimate","#e74c3c",,,,,,
+
+*/
