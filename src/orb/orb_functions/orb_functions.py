@@ -212,7 +212,6 @@ def addtoDict(dictName, date, val):
   except:
     dictName[date] = val
 
-addtoDict(onVacant, 2, 100)
 
 def errorCalc(groundTruth, model):
   '''
