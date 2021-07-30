@@ -56,4 +56,4 @@ The following URLs are used to access ORB resources:
 Following OpenAPI Specification: https://github.com/OAI/OpenAPI-Specification/tree/main/examples/v3.1
 
 ## Docker container structure
-![ORB Container Architecture](./doc/orb_containers.png "ORB Container Architecture")
+![ORB Container Architecture](Documentation/assets/orb_containers.png "ORB Container Architecture")

@@ -1,0 +1,137 @@
+id:@p:devSBL:r:2891a965-0821ef78 "Heatmap"
+dis:Heatmap
+appName:occupancyApp
+mod:2021-07-29T23:51:12.03Z
+order:5
+view:occHeatmap
+src:
+  view: {inherit:"tile"}
+  span: {var kind:"Span" input}
+  layout: {var kind:"Str" defVal:"grid 7x6; 0 0 5 6; 5 1 2 5; 5 0 2 1"}
+  subView: Trio:
+    view: {inherit:"chart"}
+    span: {var binding:"../span"}
+    data: {expr:"viAhuOccStateHeatmap({{span}},5min)"}
+  subView1: Trio:
+    view: {inherit:"table"}
+    span: {var binding:"../span"}
+    data: {expr:"calculateAhuOccStateKpis({{span}}).sortDis"}
+  subView2: Trio:
+    view: {inherit:"fandoc"}
+    data: {expr:"\"Legend\\n******\\n\\n![legend][600x120]`https://lh6.googleusercontent.com/AxTHo67xL8CPz4QtJGpmPxBBWL-lns6CFlEv9Ta9XS6lg0he6CHZ3JxLZCjXMK7AgPc3dodQmsALimymsH7uFhTXb5ddut0J6vxJ0qsijTixpJly8pHH0UI2irxqhsZDMQ=w1280`\""}
+
+---
+id:@p:devSBL:r:2883bcbd-7ff028b0 "Wifi by Floor"
+dis:Wifi by Floor
+appName:occupancyApp
+mod:2021-07-16T04:18:03.217Z
+view:occWifiView
+src:
+  view: {inherit:"chart"}
+  site: {var kind:"Ref<site>" input defVal:@p:lbnl:r:2543b6e0-6ec3d354 navCluster}
+  span: {var kind:"Span" input defExpr:"(pastWeek()).toSpan()"}
+  stacked: {var kind:"Bool" input defVal:F}
+  uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+  data: {expr:"viWifiConnectionsByFloor({{site}}, {{span}}, {{stacked}})"}
+
+---
+id:@p:devSBL:r:288dcb23-17f0693e "IDE"
+dis:IDE
+appName:code
+mod:2021-07-24T15:46:18.917Z
+view:codeDevView
+src:
+  view: {inherit:"tile"}
+  layout: {var kind:"Str" defVal:"grid 4x2; 0 0 2 2; 2 0 2 1; 2 1 1 1; 3 1 1 1"}
+  codeEditor: Trio:
+    view: {inherit:"codeEditor"}
+    showTool: {kind:"Str" input defVal:"docs"}
+  shell: Trio:
+    view: {inherit:"table"}
+    evalStr: {var kind:"Str" size:"900px" input defVal:"null"}
+    outputType: {var enum kind:"Str" input defVal:"table"}
+    data: {expr:"eval( {{evalStr}} )"}
+    subView: Trio:
+      view: {inherit:"blank"}
+  funcReview: Trio:
+    view: {inherit:"text"}
+    funcRef: {var kind:"Ref<func>" input}
+    data: {expr:"readById({{funcRef}})->src"}
+  debugLog: Trio:
+    view: {inherit:"log"}
+    filter: {defExpr:R defVal:"name==\"orbTest\""}
+
+---
+id:@p:devSBL:r:28919aac-1229ddff "AHU Explorer"
+dis:AHU Explorer
+appName:occupancyApp
+mod:2021-07-26T21:09:37.739Z
+view:ahuExplorer
+src:
+  view: {inherit:"tile"}
+  siteRef: {var kind:"Ref<site>" input navCluster}
+  layout: {var kind:"Str" defVal:"grid 6x6; 0 0 1 1; 0 1 2 5; 1 0 4 1; 2 1 3 5; 5 0 1 6"}
+  ahuList: Trio:
+    view: {inherit:"table"}
+    ahu: {var kind:"Ref" bindSelect:"id"}
+    siteRef: {var binding:"../siteRef"}
+    new: {action:"recNew"}
+    edit: {action:"recEdit"}
+    trash: {action:"recTrash"}
+    data: {expr:"xReadAll(\"ahu and siteRef==@\" + {{siteRef}}).keepCols([\"id\",\"assetTag\"])"}
+  ahuMeta: Trio:
+    view: {inherit:"form" templateName:"ahu"}
+    ahuRef: {var binding:"../ahuList/ahu"}
+    submit: {action:"recFormCommit"}
+    data: {expr:"xReadById({{ahuRef}}).recForm(\"ahu\")"}
+  equipList: Trio:
+    view: {inherit:"table"}
+    ahuRef: {var binding:"../ahuList/ahu"}
+    data: {expr:"xReadAll(\"equip and equipRef==@\" + {{ahuRef}})"}
+  pointList: Trio:
+    view: {inherit:"table"}
+    ahuRef: {var binding:"../ahuList/ahu"}
+    data: {expr:"xReadAll(\"point and (equipRef==@\" + {{ahuRef}} + \" or equipRef->equipRef==@\" + {{ahuRef}} + \")\" ).keepCols([\"id\",\"bacnetLogInterval\",\"curStatus\",\"hisEnd\",\"hisMode\",\"hisSize\",\"hisStatus\",\"writable\"])"}
+  vavList: Trio:
+    view: {inherit:"table"}
+    ahuRef: {var binding:"../ahuList/ahu"}
+    data: {expr:"xReadAll(\"ahuRef==@\" + {{ahuRef}}).keepCols([\"id\",\"spaceRef\"])"}
+
+---
+id:@p:devSBL:r:288ede1f-675afd85 "ORB Util v5"
+dis:ORB Util v5
+appName:occupancyApp
+mod:2021-07-27T03:28:48.081Z
+order:20
+view:orbTestUtilV5
+src:
+  view: {inherit:"tile"}
+  layout: {var kind:"Str" defVal:"grid 4x4; 0 0 3 4; 3 0 1 2; 3 2 1 2"}
+  orbChart: Trio:
+    view: {inherit:"chart"}
+    uiViewBar: {var kind:"Dict" defVal:{} showVarLabels:T}
+    rec: {var input binding:"../testList/selection"}
+    span: {var kind:"Span" input defExpr:"(lastWeek()).toSpan()"}
+    rollup: {dis:"Rollup (min)" var kind:"Number" input defVal:5min unitless}
+    searchMethod: {var enum:"none,binseg,window,dynamic,bottom_up,kernel,ORBanalyzer" kind:"Str" input defVal:"bottom_up"}
+    model: {var enum:"rbf,l1,l2,linear" kind:"Str" input defVal:"rbf"}
+    breakpoints: {var kind:"Number" input defVal:10 unitless}
+    dailyThreshold: {var kind:"Number" input defVal:0.9 unitless}
+    overallThreshold: {var kind:"Number" input defVal:0.9 unitless optional}
+    width: {var kind:"Number" input defVal:40 unitless optional}
+    minSize: {var kind:"Number" input defVal:3 unitless optional}
+    step: {var kind:"Number" input defVal:5 unitless optional}
+    data: {expr:"viWifiChangepointV5( {{rec}}, {{span}}, {{rollup}}, {{searchMethod}}, {{model}}, {{breakpoints}}, {{dailyThreshold}}, {{overallThreshold}}, {{width}}, {{minSize}}, {{step}})"}
+  testList: Trio:
+    view: {inherit:"table" templateName:"orbTest"}
+    selection: {var kind:"Ref<orbTest>" bindSelect:"id"}
+    new: {action:"recNew"}
+    edit: {action:"recEdit"}
+    trash: {action:"recTrash"}
+    menu: {action:"uiContextMenu"}
+    data: {expr:"readAll(orbTest).sortDis()"}
+  testResults: Trio:
+    view: {inherit:"form" templateName:"orbTestEditor"}
+    selectedTest: {var input binding:"../testList/selection"}
+    submit: {action:"recFormCommit"}
+    data: {expr:"readById({{selectedTest}}).recForm(\"orbTest\")"}
