@@ -34,7 +34,7 @@ services:
       dockerfile: docker/jupyterlab.dockerfile
     volumes:
       - "./data:/home/jovyan/data"
-      - "./:/home/jovyan/orb_local"
+      - "./src:/home/jovyan/orb"
     ports:
       - "8888:8888"
     expose:
