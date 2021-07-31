@@ -1,0 +1,12 @@
+tag,description,dataPoints,status,dataSource,dataLocation,anonymization,dataType,dataInterval,dataUnit,metadata
+freezerDoorStatus,Timestamp of door opening event,60,0 Downloaded,freezer monitoring,traxx,,bool,cov,"Closed,Open","room,floor"
+wifiDeviceConnections,number of devices connected to wifi access point,65,0 Downloaded,IT,influxdb,aggregation,int,5min,count,"room,floor,wifiRouterRef"
+occSensorZone,"Motion detected, with off delay. Zone summary",77,0 Downloaded,building controls,skyspark,,bool,5min,"Off,On","room,floor"
+meterWaterFlow,"domestic water consumption, potable",1,1 Queued,building controls,skyspark,,float,5min,gpm,
+elecBuildingLoad,"power consumption, whole building level",1,1 Queued,power monitoring,skyspark,,float,15min,kW,
+soundLevelSensor,min/avg/max sound level,4,1 Queued,air monitoring,skyspark,,float,5min,dB,"room,floor"
+tvocSensor,total volotile organic compounts in zone,4,1 Queued,air monitoring,skyspark,,float,5min,ppm,"room,floor"
+co2Sensor,Amount of CO2 in zone or air stream,20,1 Queued,building controls,skyspark,,float,5min,ppm,"room,floor"
+fumehoodFlow,airflow through fume hood. ,20,1 Queued,building controls,skyspark,,float,5min,cfm,"room,floor"
+occSensor,"Motion detected, with off delay. Individual sensor",286,1 Queued,lighting controls,encelium,,bool,cov,,
+securityCardReader,Timestamps of card scans + count of unique scans,15,2 In transit,Security,ITBS,aggregation,dateTime,cov,dateTime,"cardReaderType,room,floor"

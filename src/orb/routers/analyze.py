@@ -1,14 +1,10 @@
-from datetime import datetime
 from typing import Optional
 
-import numpy as np
 import pandas as pd
-from fastapi import APIRouter
-from pandas import to_datetime
+from fastapi import APIRouter, Query
 
+from ..orb_functions.orb_functions import analyze
 from ..parsers.haystackGridJson import GridJson, gridToDataframe, seriesToHaystackGrid
-from ..orb_functions.orb_functions import normalize, timeFinder, analyze
-
 
 router = APIRouter(
     prefix="/analyze",
@@ -16,12 +12,32 @@ router = APIRouter(
 )
 
 
-@router.post("/json")
+@router.post("/json", summary="TimeFinder Change Point Method")
 def analyze_json(data: GridJson,
-                 level: Optional[str] = "stream",
-                 groupby: Optional[str] = "date",
-                 dailyThreshold: Optional[float] = 0.9,
-                 overallThreshold: Optional[float] = 0.9
+                 level: Optional[str] = Query("stream",
+                                              title="Analysis level",
+                                              description="level (required): \"stream\" if passing in a Pandas Series "
+                                                          "with timestamp index and one data column or \"stamp\" if "
+                                                          "passing in a Pandas Dataframe with datestring index and "
+                                                          "two data columns containing suggested start and end times "
+                                                          "(\"start\" and \"end\")"),
+                 groupby: Optional[str] = Query("date",
+                                                title="Groupby parameter",
+                                                description="groupby (\"day\"): \"date\" to return results aggregated "
+                                                            "by date or \"day\" to return results aggregated by day "
+                                                            "of week"),
+                 dailyThreshold: Optional[float] = Query(0.9,
+                                                         title="Minimum daily AUC",
+                                                         description="dailyThreshold (0.9): minimum percentage of "
+                                                                     "timeseries area under curve (AUC) to be covered "
+                                                                     "by the suggested start and end times for each "
+                                                                     "day"),
+                 overallThreshold: Optional[float] = Query(0.9,
+                                                           title="Minimum overall AUC",
+                                                           description="overallThreshold (0.9): percentile of "
+                                                                       "suggested start and end times for each day to "
+                                                                       "return as suggestion for that day of week if "
+                                                                       "groupby = \"day\""),
                  ):
     data_df = gridToDataframe(data)
 
@@ -30,116 +46,17 @@ def analyze_json(data: GridJson,
     except Exception as error:
         return {"error_text": str(error)}
 
-    print (results)
-
     changepoints = pd.Series()
 
-    # if results != {}:
     for date, start in results["start"].items():
         if not pd.isnull(start):
-            # ts = to_datetime(str(date) + " " + str(start))
             ts = pd.to_datetime(str(start))
             changepoints[ts] = "true"
-            print(ts)
     for date, end in results["end"].items():
         if not pd.isnull(end):
-            # ts = to_datetime(str(date) + " " + str(end))
             ts = pd.to_datetime(str(end))
-            print (ts)
             changepoints[ts] = "false"
-
-    # changepoints = changepoints.sort_index()
 
     changepoints.index = pd.DatetimeIndex(pd.to_datetime(changepoints.index)).tz_localize("US/Pacific")
 
-    print(changepoints)
-
     return seriesToHaystackGrid(data, changepoints)
-    # return changepoints
-
-
-#
-# def normalize(sensorData):
-#     for idx, date in sensorData.groupby(sensorData.index.date):
-#         dateString = date.index[0].strftime('%Y-%m-%d')
-#         sensorData[dateString] = sensorData[dateString] - date.min()
-#     return sensorData
-#
-#
-# def timeFinder(points, dailyThreshold=0.9):
-#     sums, lens, ratios = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-#
-#     for i in range(points.size):
-#         try:
-#             sums[points.index[i]] = points[i:].cumsum()
-#         except ValueError:
-#             print(str(ValueError) + " in timeFinder")
-#             return {"start": None, "end": None}
-#
-#         lens[points.index[i]] = ([0] * i) + list(range(0, points.size - i))
-#
-#     lens.index = lens.columns
-#     lens.replace(0, np.nan, inplace=True)
-#
-#     ratios = sums / sums.iloc[-1][0]
-#     ratios[ratios < dailyThreshold] = np.nan
-#     ratios = (lens / sums.shape[0]) / ratios
-#
-#     startTime = ratios.min().idxmin()
-#     endTime = ratios.min(axis=1).idxmin()
-#
-#     return {"start": startTime, "end": endTime}
-#
-#
-# def analyze(sensorData,
-#             groupby="day",
-#             dailyThreshold=0.9,
-#             overallThreshold=0.9):
-#     sensorData = normalize(sensorData)
-#
-#     startDatetimes = {}
-#     endDatetimes = {}
-#
-#     for idx, date in sensorData.groupby(sensorData.index.date):
-#         if groupby == "date":
-#             dateString = date.index[0].strftime('%Y-%m-%d')
-#         elif groupby == "day":
-#             dateString = date.index[0].dayofweek
-#         else:
-#             raise ValueError('Illegal group argument: must be "day" or "date" to proceed.')
-#
-#         times = timeFinder(date, dailyThreshold)
-#
-#         if times["start"] != None:
-#             if dateString not in startDatetimes:
-#                 startDatetimes[dateString] = []
-#                 endDatetimes[dateString] = []
-#             startDatetimes[dateString].append(times["start"])
-#             endDatetimes[dateString].append(times["end"])
-#
-#     if startDatetimes == {}:
-#         return {"error": "No breakpoints found"}
-#
-#     if groupby == "date":
-#         results = pd.concat([pd.DataFrame(startDatetimes), pd.DataFrame(endDatetimes)]).transpose()
-#
-#     elif groupby == "day":
-#         startDatetimes = pd.DataFrame.from_dict(startDatetimes, orient='index')
-#         endDatetimes = pd.DataFrame.from_dict(endDatetimes, orient='index')
-#
-#         startTimes = startDatetimes.applymap(lambda x: pd.NaT if pd.isnull(x) else x.time())
-#         endTimes = endDatetimes.applymap(lambda x: pd.NaT if pd.isnull(x) else x.time())
-#
-#         startPercentiles = startTimes.applymap(
-#             lambda x: pd.NaT if pd.isnull(x) else datetime.combine(datetime.min, x) - datetime.min).quantile(
-#             1 - overallThreshold, axis=1, numeric_only=False).apply(lambda x: (datetime.min + x).time())
-#         endPercentiles = endTimes.applymap(
-#             lambda x: pd.NaT if pd.isnull(x) else datetime.combine(datetime.min, x) - datetime.min).quantile(
-#             overallThreshold, axis=1, numeric_only=False).apply(lambda x: (datetime.min + x).time())
-#
-#         results = pd.concat([startPercentiles, endPercentiles], axis=1)
-#     else:
-#         results = None
-#
-#     results.columns = ["start", "end"]
-#     return results

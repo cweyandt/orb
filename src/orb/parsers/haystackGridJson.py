@@ -12,24 +12,13 @@ https://github.com/widesky/hszinc
 from datetime import datetime
 from typing import Dict, Union, Optional, List
 
-import hszinc
+# TODO: Redo this entire set of functions using hszinc and pyhaystack
+# import hszinc
+# import pyhaystack
 import numpy as np
 import pandas as pd
-import pyhaystack
 from pydantic import BaseModel
 
-
-# class HaystackGridJson(BaseModel):
-#     _kind: str
-#     meta: Dict[str, Union[str, int, Dict]]
-#     cols: List[{name: str
-#                 meta: Optional[Dict[str, Union[str, int, Dict]]]}]
-#     rows: List[{ts: {_kind: str
-#                      tz: str
-#                      val: datetime},
-#                 v0: Union[{_kind: str
-#                            val: Union[int, float, str]
-#                            unit: Optional[str] = None}, float]}]
 
 class GridMeta(BaseModel):
     ver: str
@@ -69,7 +58,8 @@ class GridJson(BaseModel):
         schema_extra = {
             "example": {
                 "_kind": "grid",
-                "meta": {"hisStart": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-22T00:00:00-07:00"},
+                "meta": {"ver":"3.0", "dis":"Sample WiFi Data for one day",
+                         "hisStart": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-22T00:00:00-07:00"},
                          "hisEnd": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-23T00:00:00-07:00"},
                          },
                 "cols": [
@@ -77,25 +67,110 @@ class GridJson(BaseModel):
                      "meta": {"tz": "Los_Angeles"}},
                     {"name": "v0",
                      "meta": {
-                         "id": {"_kind": "ref", "dis": "B74 Floor 1 Rm 107C Supply VAV-011 Zone Temperature",
-                                "val": "p:lbnl:r:2391ddb2-7b4413e5"}, "tz": "Los_Angeles", "unit": "\u00b0F",
-                         "locationRef": {"_kind": "ref", "dis": "B74 Floor 1", "val": "p:lbnl:r:239070b4-f416c9da"},
-                         "navName": "Zone Temperature",
-                         "spaceRef": {"_kind": "ref", "dis": "B74 Floor 1 Rm 107C",
-                                      "val": "p:lbnl:r:23909712-0e6c5a3e"},
-                         "siteRef": {"_kind": "ref", "dis": "74", "val": "p:lbnl:r:22c912f0-91f6badd"},
-                     }
-                     }
-                ],
+                         "navName": "WiFi Connections"}}
+                        ],
                 "rows": [
-                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-21T23:55:00-07:00"},
-                     "v0": {"_kind": "number", "val": 67.01000213623047, "unit": "\u00b0F"}},
-                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-06-22T00:00:00-07:00"},
-                     "v0": {"_kind": "number", "val": 66.98999786376953, "unit": "\u00b0F"}}
-                ]
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T00:00:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T00:15:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T00:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T00:45:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T01:00:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T01:15:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T01:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T01:45:00-07:00"}, "v0": 2},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T02:00:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T02:15:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T02:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T02:45:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T03:00:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T03:15:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T03:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T03:45:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T04:00:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T04:15:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T04:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T04:45:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T05:00:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T05:15:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T05:30:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T05:45:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T06:00:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T06:15:00-07:00"}, "v0": 8},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T06:30:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T06:45:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T07:00:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T07:15:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T07:30:00-07:00"}, "v0": 6},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T07:45:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T08:00:00-07:00"}, "v0": 6},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T08:15:00-07:00"}, "v0": 7},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T08:30:00-07:00"}, "v0": 12},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T08:45:00-07:00"}, "v0": 13},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T09:00:00-07:00"}, "v0": 22},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T09:15:00-07:00"}, "v0": 24},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T09:30:00-07:00"}, "v0": 26},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T09:45:00-07:00"}, "v0": 27},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T10:00:00-07:00"}, "v0": 32},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T10:15:00-07:00"}, "v0": 37},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T10:30:00-07:00"}, "v0": 36},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T10:45:00-07:00"}, "v0": 32},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T11:00:00-07:00"}, "v0": 32},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T11:15:00-07:00"}, "v0": 34},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T11:30:00-07:00"}, "v0": 35},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T11:45:00-07:00"}, "v0": 38},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T12:00:00-07:00"}, "v0": 38},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T12:15:00-07:00"}, "v0": 26},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T12:30:00-07:00"}, "v0": 27},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T12:45:00-07:00"}, "v0": 27},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T13:00:00-07:00"}, "v0": 31},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T13:15:00-07:00"}, "v0": 34},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T13:30:00-07:00"}, "v0": 35},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T13:45:00-07:00"}, "v0": 32},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T14:00:00-07:00"}, "v0": 37},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T14:15:00-07:00"}, "v0": 38},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T14:30:00-07:00"}, "v0": 46},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T14:45:00-07:00"}, "v0": 33},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T15:00:00-07:00"}, "v0": 38},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T15:15:00-07:00"}, "v0": 36},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T15:30:00-07:00"}, "v0": 33},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T15:45:00-07:00"}, "v0": 35},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T16:00:00-07:00"}, "v0": 34},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T16:15:00-07:00"}, "v0": 36},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T16:30:00-07:00"}, "v0": 34},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T16:45:00-07:00"}, "v0": 27},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T17:00:00-07:00"}, "v0": 26},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T17:15:00-07:00"}, "v0": 27},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T17:30:00-07:00"}, "v0": 25},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T17:45:00-07:00"}, "v0": 16},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T18:00:00-07:00"}, "v0": 18},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T18:15:00-07:00"}, "v0": 21},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T18:30:00-07:00"}, "v0": 15},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T18:45:00-07:00"}, "v0": 10},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T19:00:00-07:00"}, "v0": 11},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T19:15:00-07:00"}, "v0": 7},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T19:30:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T19:45:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T20:00:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T20:15:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T20:30:00-07:00"}, "v0": 5},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T20:45:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T21:00:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T21:15:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T21:30:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T21:45:00-07:00"}, "v0": 4},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T22:00:00-07:00"}, "v0": 2},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T22:15:00-07:00"}, "v0": 3},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T22:30:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T22:45:00-07:00"}, "v0": 1},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T23:00:00-07:00"}, "v0": 2},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T23:15:00-07:00"}, "v0": 2},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T23:30:00-07:00"}, "v0": 2},
+                    {"ts": {"_kind": "dateTime", "tz": "Los_Angeles", "val": "2021-07-29T23:45:00-07:00"}, "v0": 2}
+                        ]
             }
         }
 
+# Pull (ts,val) from a univariate haystack grid
 def parseHaystackGrid(data: GridJson):
     ts = []
     val = []
@@ -109,6 +184,8 @@ def parseHaystackGrid(data: GridJson):
     val = np.array(val)
     return ts, val
 
+# Convert univariate haystack grid to dataframe
+# TODO: rename func and vars to reflect that this converts to pandas Series, not Dataframe
 def gridToDataframe(data: GridJson):
     ts = []
     val = []
@@ -123,6 +200,8 @@ def gridToDataframe(data: GridJson):
     df = df.replace(0, np.nan).fillna(method='ffill')
     return df
 
+# Convert results from Ruptures CPD methods to haystack grid with alternating True/False values
+# TODO: This is just plain lazy. It was a first attempt and should be discarded.
 def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
     grid = {"_kind": "grid", "meta": {"ver": "3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},
             "cols": [{"name": "ts"}, {"name": "v0", "kind": "Bool"}],
@@ -138,10 +217,10 @@ def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
     grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower()})  # Initialize last point from hisEnd
     return grid
 
+
+# Convert pandas Series to haystack Grid
+# TODO: Replace this with hszinc library implemented as a dependency
 def seriesToHaystackGrid(data: GridJson, changepoints):
-    # hisStart = changepoints.index[0]
-    # hisEnd = changepoints.index[-1]
-    # tz = "Los_Angeles"
     hisStart = data.meta.hisStart
     hisEnd = data.meta.hisEnd
     tz = data.meta.hisStart["tz"]

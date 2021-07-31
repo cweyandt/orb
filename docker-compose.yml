@@ -7,6 +7,8 @@
 version: "3.9"
 
 services:
+  # FastAPI instance running changepoint inference at /api/v1
+  # Interactive Swagger documentation at /api/v1/doc
   orb:
     build: 
       context: ./
@@ -22,19 +24,19 @@ services:
     tty: true
     environment:
       PORT: 80
-      LOG_LEVEL: debug
+      LOG_LEVEL: debug # This doesn't work properly with the following start-reload.sh enabled
     restart: always
     # Comment next line for production, it causes the server to auto-reload on file changes.
     command: ["/start-reload.sh"]
 
+  # Basic Jupyter Lab instance with TensorFlow libraries pre-installed
   jupyterlab:
-    # image: jupyter/tensorflow-notebook
-    build: 
+    build:
       context: ./
       dockerfile: docker/jupyterlab.dockerfile
     volumes:
       - "./data:/home/jovyan/data"
-      - "./:/home/jovyan/orb_local"
+      - "./src:/home/jovyan/orb"
     ports:
       - "8888:8888"
     expose:
@@ -44,7 +46,10 @@ services:
     environment:
       JUPYTER_ENABLE_LAB: "yes"
 
-
+  # NGINX container configuration
+  # Serves exposed ports on previous containers via HTTP/TCP:80
+  # TODO: Implement SSL
+  # TODO: Implement proxy pass for jupyter notebooks? (this may not be desirable for security reasons)
   # https://gist.github.com/cboettig/8643341bd3c93b62b5c2
   nginx:  
     build: 

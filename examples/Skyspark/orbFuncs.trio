@@ -1,0 +1,1232 @@
+id:@p:devSBL:r:2883cf85-877a4c2b "xHisReadById"
+name:xHisReadById
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (ref: null, span: pastWeek(), limit: 10000, site: "lbnl") => do
+    xq().xqProjs(site).xqReadByIds(ref).xqHisRead(span, {limit: limit}).xqExecute.first
+  end
+---
+id:@p:devSBL:r:2880757e-e9bf2dc2 "connInfluxWifi"
+name:connInfluxWifi
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  /*------------------------------------------------------------------------------
+    Copyright 2021 Chris Weyandt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
+  ------------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------------
+    Basic connection function for influxdb using basic authentication.
+
+    Arguments:
+
+  ------------------------------------------------------------------------------*/
+
+  /*
+
+  -----
+  https://stackhub.org/package/afHttpClientExt
+
+  Use the core Axon function passwordSet() to securely set
+  your password in the current project's password store.
+  passwordSet() may be called manually at any point in time
+  using a known Ref:
+
+  passwordSet(@xxxx-xxxx, "secretPassword")
+
+  Then, in your HTTP code, pass the same Ref to afHttpAuth
+  and the password will be retrieved from the project's
+  password store:
+
+  afHttpAuth("basic", "user", @xxxx-xxxx)
+  afHttpGet(`http://example.com/secret.txt`)
+
+  This keeps secrets safe from prying eyes!
+  -----
+  */
+
+  (wifiApRec: null, restart: null, connRef: @p:devSBL:r:288077be-7e22d3b4) => do
+    // Convert from reference to record if reference is given
+    if (isRef(wifiApRec)) wifiApRec=readById(wifiApRec)
+
+      // Exit if required tags are missing
+    if (wifiApRec.missing("wifiApName"))
+      throw "Record is missing a required tag \"wifiApName\" for connInfluxWifi"
+
+    // Process restart
+    if (isDateTime(restart)) do
+      wifiApRec.hisRemove(restart..now())
+      startTs: restart
+    // If restart not provided, determine earliest hisEnd
+    end else do
+      try startTs: wifiApRec->hisEnd
+      catch throw "restart argument not provided and point is missing "
+                  + "hisEnd and requires backfilling"
+    end
+    startMillis: (startTs.toJavaMillis("UTC")*1000).to("s").as("1").format("0")
+    startMillis = [startMillis, "ms"].concat
+
+    // Configure connection
+    method: "GET"
+    // headers: {"Accept": "application/json"}
+    headers: {"Accept": "application/csv"}
+    body: null
+
+    query0: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = 'ap135-1-119b-r242') AND time >= 1626066000000ms GROUP BY time(5m) fill(0) ORDER BY time DESC"
+
+    query1: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = '"
+    // ap135-1-119b-r242
+    query2: "') AND time >= "
+    // 1626066000000ms
+    query3: " GROUP BY time(5m) fill(0) ORDER BY time DESC"
+    query: [query1, wifiApRec->wifiApName, query2, startMillis, query3].concat
+    // Build query uri string
+
+    influxQL_uri: [connRef->uri, """?db=""", connRef->influxDatabase, """&q=""", query].concat
+
+    // return [influxQL_uri, startMillis, now().toJavaMillis, 1626066000000ms]
+
+    try do
+      afHttpAuth("basic", connRef->influxUsername, connRef)
+      // -- Execute with afHttpExt --
+      afHttpRequest(method, ``+influxQL_uri, headers, body)
+      // afHttpRequest(method, ``+uri, headers, body)
+
+    catch (err) do
+          // perpetuate all other errors
+          afHttpResponse({safeNames})
+          throw err
+    end
+
+    res: afHttpResponse({safeNames})->body
+            .ioReadCsv()
+            .addCol("ts", (r => (r["time"].parseInt/1000000).fromJavaMillis))
+            .addCol("v0", (r => r["sum"].parseInt))
+            .removeCols(["name", "sum", "tags", "time"])
+            .sort((a,b)=> a->ts <=> b->ts)
+
+    res = res.reorderCols(res.colNames.moveTo("ts",0))
+
+    res.hisWrite(wifiApRec)
+
+    // If we got to this point, remove hisErr
+    commit(diff(wifiApRec, {-hisErr}, {transient}))
+
+    // Exit if empty read
+    // if (raw==null or isEmpty(raw)) throw "raw is empty"
+
+    // return {"hisStart": wifiApRec->hisStart, "hisEnd": wifiApRec->hisEnd, "written": size(res)}
+
+  end
+
+
+
+
+  /*------------------------------------------------------------------------------
+    Updates
+    2021-07-13  Chris Weyandt
+      Created.
+  ------------------------------------------------------------------------------*/
+---
+id:@p:devSBL:r:288cb148-3a24d034 "hisReadAhuStatusXq"
+name:hisReadAhuStatusXq
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  // Calls hisReadAhuStatus on LBNL project
+
+  (ahuRef:@p:lbnl:r:26693dbc-af6f1a61, span: pastWeek(), proj: "lbnl") => do
+    xq().xqProjs(proj).xqEval("anAhuStatusHis(@" + ahuRef + "," + toAxonCode(span) + ")").xqExecute.first
+  end
+---
+id:@p:devSBL:r:288c5b0b-89b26045 "viWifiChangepointV5"
+name:viWifiChangepointV5
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (orbTest: @p:devSBL:r:2885a3d4-35e7ceea, span: pastWeek(), rollup: 5min,
+      search:"ORBanalyer",
+      model:"rbf", breakpoints:10,   // Apply to CPD methods
+      dailyThreshold: 0.9, overallThreshold: 0.9,   //apply to ORBanalyzer
+      width:40, min_size:3, step:5) => do  // apply to some CPD methods
+
+
+
+    if (isRef(orbTest)) orbTest=readById(orbTest)
+
+    // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+    if (not(orbTest.has("orbTest")))
+      return {error: "No corresponding Test configuration found"}
+             .toGrid()
+
+    // Get building dis
+    try do
+      building: xReadById(orbTest->buildingRef)->dis
+      building = if (building.startsWith("0")) building.parseInt.toStr else building
+    catch (ex) do
+      return ex
+    end
+
+    // Gather list of floor numbers to include in the query
+    // floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+
+    // Check whether test results have already been calculated for this span
+    if (orbTest.missing("hisEnd"))
+      orbTest.hisSyncOrbTest(span)
+
+    spanEnd: if (span.end.isDateTime) span.end.date else span.end
+    if (orbTest.has("hisEnd"))
+      if (orbTest->hisEnd.date < spanEnd)
+        orbTest.hisSyncOrbTest(span)
+
+    // Read test results from orbTest his
+    occGrid: orbTest.hisRead(span) //.addColMeta("v0", {chartGroup:"aa0"})
+
+    // Collect status history for each AHU referenced in orbTest ahuRefs[]
+    ahuHisGrid: toolOrbTestAhuStates(orbTest, span)
+
+    hisGrid: hisJoin([occGrid, ahuHisGrid])
+
+
+    // Collect points for analysis
+    wifiApGrid: readAll(hisEnd and wifiApBuilding==building and not disabled)
+
+    // Filter floors, if desired
+    if (orbTest.has("floorRefs")) do
+      // Gather list of floor numbers to include in the query
+      try floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+      catch (ex) return {error: "Error finding floors in building",
+                         catch: ex }.toGrid()
+      wifiApGrid = wifiApGrid.findAll(r => do
+        floor: r->wifiApFloor
+        if (isStr(floor)) floor = floor.parseNumber
+        floorList.contains(floor)
+      end)
+
+    end
+
+    // Aggregate points to a single timeseries
+    wifiData: wifiApGrid.hisRead(span, {limit:null})
+                     .hisFoldCols(sum)
+                     //.hisRollup(max,rollup)
+                     .addColMeta("v0",  { "chartGroup":"aa0",
+                                          "order":0,
+                                          "chartType": "line",
+                                          "strokeWidth":2,
+                                          "dis": "B" + building + " WiFi Connections"
+                                          })
+
+    return hisJoin([wifiData,hisGrid])
+
+  end
+
+  /*
+  x,y,chartType,chartGroup,dis,color,strokeWidth,yAxisPosition,opacity,chartAreaMode,yAxisMax,yAxisVisible
+  "ts","v0","line","g0","B91 Total Occupancy Sensors ON","#e74c3c",2.5,"left",,,,
+  "ts",@p:lbnl:r:25b22896-132cd609,"line","g0","Real HVAC Schedule","#3498db",,"right",0.2,"axisMin",0.2kW,F
+  "ts","v1","runtime","g0","ORB Occupancy Estimate","#e74c3c",,,,,,
+
+  */
+---
+id:@p:devSBL:r:2883caee-45601f41 "xReadById"
+name:xReadById
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (ref: null, site: "lbnl") => do
+    res: xq().xqProjs(site).xqReadByIds(ref).xqExecute.first
+  end
+---
+id:@p:devSBL:r:2883c9db-7fc4c885 "xReadAll"
+name:xReadAll
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (filtStr: "", site: "lbnl") => do
+    xq().xqProjs(site).xqReadAll(parseFilter(filtStr)).xqExecute
+  end
+---
+id:@p:devSBL:r:2891fa9c-f8ad4d35 "hisSyncAhuOccState"
+name:hisSyncAhuOccState
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  // Wrapper function for `calculateAhuOccStateHis(ahuHisGrid,occHisGrid)`
+
+  (orbTest: null, span) => do
+
+    if (isRef(orbTest)) orbTest=readById(orbTest)
+
+    // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+    if (not(orbTest.has("orbTest")))
+      return {error: "No corresponding Test configuration found"}
+             .toGrid()
+
+    /*
+    // Get building dis
+    try do
+      building: xReadById(orbTest->buildingRef)->dis
+    catch (ex) do
+      return ex
+    end
+    */
+
+    // Gather list of floor numbers to include in the query
+    // floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+
+    // Check whether test results have already been calculated for this span
+    /*
+    if (orbTest.missing("hisEnd"))
+      orbTest.hisSyncOrbTest(span)
+
+    spanEnd: if (span.end.isDateTime) span.end.date else span.end
+    spanStart: if (span.start.isDateTime) span.start.date else span.start
+    if (orbTest.has("hisEnd"))
+      if ((orbTest->hisEnd.date < spanEnd) or (orbTest->hisStart.date > spanStart))
+        orbTest.hisSyncOrbTest(span)
+    */
+
+
+    // Read test results from orbTest his
+    occGrid: orbTest.hisRead(span)
+
+    // Collect status history for each AHU referenced in orbTest ahuRefs[]
+    ahuHisList: orbTest->ahuRefs.map ahuRef => do
+      ahuDis: xReadById(ahuRef).dis
+
+      // Collect his from AHU
+      ahuHis: hisReadAhuStatusXq(ahuRef, span)
+
+      // Calculate enumerated history
+      ahuEvalHis: calculateAhuOccStateHis(ahuHis, occGrid)
+
+      logInfo({name:"orbTest", proj:"devSBL"}, "ahuEvalHis: " + ahuDis + ", " + span.end.toStr)
+
+      ahuEvalHis = ahuEvalHis.addColMeta("v0", {dis: ahuDis})
+
+      // Determine whether a point already exists for this AHU's results, create if needed
+      exRec: read(point and ahuInferredOccState and ahuRef==ahuRef, false)
+      if (exRec==null) do
+        ptDict: { dis: ahuDis + " Inferred Occupancy State",
+                  ahuRef: ahuRef,
+                  ahuDis: ahuDis,
+                  equipRef: @p:devSBL:r:288dc4ba-62a0edfc,
+                  buildingRef: orbTest->buildingRef,
+                  orbTestRef: orbTest->id,
+                  siteRef: @p:devSBL:r:2880b80c-4ce38f16,
+                  kind: "Str",
+                  enum: "offOccupied,offVacant,onOccupied,onVacant",
+                  hisMode: "cov",
+                  point, his, sensor, ahuInferredOccState }
+        ptDict = ptDict.set("tz", ptDict->equipRef->siteRef->tz)
+        commit(diff(exRec, ptDict, if (exRec==null) {add}))
+        exRec = read(point and ahuInferredOccState and ahuRef==ahuRef, false)
+      end
+
+      // Write ahuEvalHis to point
+      try hisWrite(ahuEvalHis, exRec) catch (ex) logWarn({name:"orbTest",proj:"devSBL"},"toolOrbTestAhuStates: hisWrite Error", ex)
+      logInfo({name:"orbTest",proj:"devSBL"}, "hisWrite: " + ahuDis)
+      // {ahuHis: ahuHis, ahuEvalHis: ahuEvalHis}   // map returns dict
+    end
+
+  end
+---
+id:@p:devSBL:r:288ca6c4-6dbe6924 "calculateAhuOccStateHis"
+name:calculateAhuOccStateHis
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  // returns hisGrid with 4 enum states: offOccupied, offVacant, onOccupied, onVacant
+
+  (ahuHis: null, occGrid: null) => do
+
+
+    // Test cases:
+    // ahuHis = if (ahuHis==null) hisReadAhuStatusXq(@p:lbnl:r:26693dbc-af6f1a61, pastWeek()) else ahuHis
+    // occGrid = if (occGrid==null) hisRead(@p:devSBL:r:2885a3d4-35e7ceea, pastWeek()) else occGrid
+
+    logInfo({name:"orbTest",proj:"devSBL"}, "calculateAhuOccStateHis")
+
+    // Find periods of overventilation and underventilation
+    xor: [ahuHis.hisFindPeriods(x=>x), occGrid.hisFindPeriods(x=>x)].hisPeriodMatrix()
+
+    xor = xor.addCol("state") r => do
+      if (r->v0 and r->v1) "onOccupied"
+      else if (r->v0 and not r->v1) "onVacant"
+      else if (not r->v0 and r->v1) "offOccupied"
+      else "offVacant"
+      end
+
+    ahuStateHis: xor.removeCols(["dur","numTrue","v0","v1"]).renameCol("state","v0")
+
+    // Calculate periods when AHU is on and building is vacant
+    onVacantSum: xor.findAll(r => r->v0 and not r->v1).colToList("dur").fold(sum)
+    // Calculate periods when AHU is off and building is occupied
+    offOccupiedSum: xor.findAll(r => r->v1 and not r->v0).colToList("dur").fold(sum)
+
+    // Convert nulls to 0
+    onVacantSum = if (onVacantSum==null) 0hr else onVacantSum
+    offOccupiedSum = if (offOccupiedSum==null) 0hr else offOccupiedSum
+
+    ahuStateHis = ahuStateHis.addColMeta("v0", {onVacantSum: onVacantSum, offOccupiedSum: offOccupiedSum})
+
+    return ahuStateHis
+
+  end
+---
+id:@p:devSBL:r:288dc52c-666207c7 "toolOrbTestAhuStates"
+name:toolOrbTestAhuStates
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (orbTest: null, span) => do
+
+    if (isRef(orbTest)) orbTest=readById(orbTest)
+
+    // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+    if (not(orbTest.has("orbTest")))
+      return {error: "No corresponding Test configuration found"}
+             .toGrid()
+
+    // Get building dis
+    try do
+      building: xReadById(orbTest->buildingRef)->dis
+    catch (ex) do
+      return ex
+    end
+
+    // Gather list of floor numbers to include in the query
+    // floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+
+    // Check whether test results have already been calculated for this span
+    if (orbTest.missing("hisEnd"))
+      orbTest.hisSyncOrbTest(span)
+
+    spanEnd: if (span.end.isDateTime) span.end.date else span.end
+    spanStart: if (span.start.isDateTime) span.start.date else span.start
+    if (orbTest.has("hisEnd"))
+      if ((orbTest->hisEnd.date < spanEnd) or (orbTest->hisStart.date > spanStart))
+        orbTest.hisSyncOrbTest(span)
+
+    // Read test results from orbTest his
+    occGrid: orbTest.hisRead(span)
+
+
+    // Collect status history for each AHU referenced in orbTest ahuRefs[]
+    ahuHisList: orbTest->ahuRefs.map ahuRef => do
+      ahuDis: xReadById(ahuRef).dis
+
+      // Collect his from AHU
+      ahuHis: hisReadAhuStatusXq(ahuRef, span)
+                .addColMeta("v0", { ahuRef: ahuRef,
+                                    ahuDis: ahuDis })
+      // Calculate enumerated history
+      ahuEvalHis: calculateAhuOccStateHis(ahuHis, occGrid)
+                .addColMeta("v0", { ahuRef: ahuRef,
+                                    ahuDis: ahuDis,
+                                    hisMode: "cov"})
+
+      logInfo({name:"orbTest", proj:"devSBL"}, "ahuEvalHis: " + ahuDis + ", " + span.end.toStr)
+      // logInfo({name:"orbTest", proj:"devSBL"}, ahuEvalHis.meta.toStr)
+      // logInfo({name:"orbTest", proj:"devSBL"}, ahuEvalHis.cols.toStr)
+      // logInfo({name:"orbTest", proj:"devSBL"}, ahuEvalHis.col("v0").meta.toStr)
+
+
+      ahuEvalHis = ahuEvalHis.addColMeta("v0", {dis: ahuDis +
+                                                     " Run State Estimation: " +
+                                                      ahuEvalHis.col("v0").meta->offOccupiedSum.format("0.00") +
+                                                      " off when possibly occupied, " +
+                                                      ahuEvalHis.col("v0").meta->onVacantSum.format("0.00") +
+                                                      " on when likely vacant." } )
+
+      // Determine whether a point already exists for this AHU's results, create if needed
+      exRec: read(point and ahuInferredOccState and ahuRef==ahuRef, false)
+      if (exRec==null) do
+        ptDict: { dis: ahuDis + " Inferred Occupancy State",
+                  ahuRef: ahuRef,
+                  ahuDis: ahuDis,
+                  equipRef: @p:devSBL:r:288dc4ba-62a0edfc,
+                  buildingRef: orbTest->buildingRef,
+                  orbTestRef: orbTest->id,
+                  siteRef: @p:devSBL:r:2880b80c-4ce38f16,
+                  kind: "Str",
+                  enum: "offOccupied,offVacant,onOccupied,onVacant",
+                  hisMode: "cov",
+                  point, his, sensor, ahuInferredOccState }
+        ptDict = ptDict.set("tz", ptDict->equipRef->siteRef->tz)
+        commit(diff(exRec, ptDict, if (exRec==null) {add}))
+        exRec = read(point and ahuInferredOccState and ahuRef==ahuRef, false)
+      end
+
+      // Write ahuEvalHis to point
+      try hisWrite(ahuEvalHis, exRec) catch (ex) logWarn({name:"orbTest",proj:"devSBL"},"toolOrbTestAhuStates: hisWrite Error", ex)
+      logInfo({name:"orbTest",proj:"devSBL"}, "hisWrite: " + ahuDis)
+      {ahuHis: ahuHis, ahuEvalHis: ahuEvalHis}   // map returns dict
+    end
+
+
+    // Flatten to hisGrid and group by ahu
+    ahuHisGrid: null
+    ahuHisList.each( (hisDict, idx) => do
+      hisGrid: hisJoin([hisDict->ahuHis.addColMeta("v0", {chartGroup: "ahu" + idx}),
+                        hisDict->ahuEvalHis.addColMeta("v0", {chartGroup: "ahu" + idx})])
+      ahuHisGrid = if (ahuHisGrid==null) hisGrid else hisJoin([ahuHisGrid, hisGrid])
+    end)
+
+    return ahuHisGrid
+  end
+---
+id:@p:devSBL:r:2892f725-a239c234 "calculateAhuOccStateKpis"
+name:calculateAhuOccStateKpis
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (span) => do
+    ahuStateRecs: readAll(point and hisEnd and ahuInferredOccState)
+
+    ahuStateKpis: ahuStateRecs.toRecList.map rec => do
+      hisGrid: rec.hisRead(span).addMeta({hisKeepEmptyCols:true})
+      ahu: xReadById(rec->ahuRef)
+      fanSize: try ahu->designSupplyFanMotorSize catch 0
+      return  { dis: rec->ahuDis,
+                ahuRef: rec->ahuRef,
+                fanSize: fanSize,
+                offOccupied: hisGrid.hisFindPeriods( (val) => val=="offOccupied" ).foldCol("v0",sum),
+                offVacant: hisGrid.hisFindPeriods( (val) => val=="offVacant" ).foldCol("v0",sum),
+                onOccupied: hisGrid.hisFindPeriods( (val) => val=="onOccupied" ).foldCol("v0",sum),
+                onVacant: hisGrid.hisFindPeriods( (val) => val=="onVacant" ).foldCol("v0",sum),
+                onVacantMagnitude: hisGrid.hisFindPeriods( (val) => val=="onVacant" ).foldCol("v0",sum)*fanSize
+              }
+    end
+
+    // Add colors to match heatmap
+    ahuStateKpis = ahuStateKpis.toGrid().addColMeta( "offOccupied", { dis:"offOccupied",
+                                                                      color:"#ff9999",
+                                                                      format:"00.0",
+                                                                      viz:"barCell",
+                                                                      colWidth:100})
+
+                                        .addColMeta( "offVacant", {   dis:"offVacant",
+                                                                      color:"#e0e0e0",
+                                                                      format:"00.0",
+                                                                      viz:"barCell",
+                                                                      hidden})
+
+                                        .addColMeta( "onOccupied", {  dis:"onOcupied",
+                                                                      color:"#ccffcc",
+                                                                      format:"00.0",
+                                                                      viz:"barCell",
+                                                                      hidden})
+
+                                        .addColMeta( "onVacant", {    dis:"onVacant",
+                                                                      color:"#ffcc99",
+                                                                      format:"00.0",
+                                                                      viz:"barCell",
+                                                                      colWidth:100})
+
+                                        .addColMeta( "onVacantMagnitude", { dis:"opportunity",
+                                                                      color:"green",
+                                                                      format:"00.0",
+                                                                      viz:"barCell",
+                                                                      colWidth:100})
+
+                                        .addColMeta( "ahuRef", {      hidden })
+
+                                        .addColMeta( "fanSize", {     dis:"supplyFanRating",
+                                                                      format:"0.0",
+                                                                      viz:"barCell",
+                                                                      colWidth:100})
+
+    return ahuStateKpis
+
+  end
+---
+id:@p:devSBL:r:2881d50d-dac9e340 "hisFillWifiInflux"
+name:hisFillWifiInflux
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  /*
+    Copyright 2021 Chris Weyandt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
+  */
+  /*
+    Backfill job for wifiAp device points
+  */
+
+  (building: null) => do
+    targets: readAll(point and wifiAp and not disabled)
+
+    // Initialize exception counter
+    exCount: 0
+    skipCount: 0
+
+    // Cycle through each target equip,
+    targets.each ((target, i) => do
+      if (not target.has("hisEnd")) do
+        try do
+          // Call external function to sync trend data
+          connInfluxWifi(target, (now()-3yr))
+        end catch (ex)
+          exCount= exCount + 1
+        // jobSleep(1s)
+      else do
+        skipCount = skipCount + 1
+      end
+    end)
+
+    // Log number of exceptions and skipped points
+    if (exCount > 0 or skipCount > 0)
+      logInfo("hisFullInfluxWifi",
+              "Failed to update trends for " + exCount + " of " + targets.size
+              + " wifiAp devices. Skipped " + skipCount + " devices that already have hisEnd")
+  end
+
+  /*
+    Updates
+    2021-07-14  Chris Weyandt
+      Created.
+  */
+
+---
+id:@p:devSBL:r:2889c0ff-cc58d88f "hisSyncWifi"
+name:hisSyncWifi
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  /*------------------------------------------------------------------------------
+    Copyright 2021 Chris Weyandt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
+  ------------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------------
+    Basic connection function for influxdb using basic authentication.
+
+    Arguments:
+
+  ------------------------------------------------------------------------------*/
+
+  /*
+
+  -----
+  https://stackhub.org/package/afHttpClientExt
+
+  Use the core Axon function passwordSet() to securely set
+  your password in the current project's password store.
+  passwordSet() may be called manually at any point in time
+  using a known Ref:
+
+  passwordSet(@xxxx-xxxx, "secretPassword")
+
+  Then, in your HTTP code, pass the same Ref to afHttpAuth
+  and the password will be retrieved from the project's
+  password store:
+
+  afHttpAuth("basic", "user", @xxxx-xxxx)
+  afHttpGet(`http://example.com/secret.txt`)
+
+  This keeps secrets safe from prying eyes!
+  -----
+  */
+
+  (wifiApRec: null, restart: null, connRef: @p:devSBL:r:288077be-7e22d3b4) => do
+    // Convert from reference to record if reference is given
+    if (isRef(wifiApRec)) wifiApRec=readById(wifiApRec)
+
+      // Exit if required tags are missing
+    if (wifiApRec.missing("wifiApName"))
+      throw "Record is missing a required tag \"wifiApName\" for connInfluxWifi"
+
+    // Process restart
+    if (isDateTime(restart)) do
+      wifiApRec.hisRemove(restart..now())
+      startTs: restart
+    // If restart not provided, determine earliest hisEnd
+    end else do
+      try startTs: wifiApRec->hisEnd
+      catch throw "restart argument not provided and point is missing "
+                  + "hisEnd and requires backfilling"
+    end
+    startMillis: (startTs.toJavaMillis("UTC")*1000).to("s").as("1").format("0")
+    startMillis = [startMillis, "ms"].concat
+
+    // Configure connection
+    method: "GET"
+    // headers: {"Accept": "application/json"}
+    headers: {"Accept": "application/csv"}
+    body: null
+
+    query0: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = 'ap135-1-119b-r242') AND time >= 1626066000000ms GROUP BY time(5m) fill(0) ORDER BY time DESC"
+
+    query1: "SELECT sum(\"connected_devices\") FROM \"wifi_count\" WHERE (\"ap_name\" = '"
+    // ap135-1-119b-r242
+    query2: "') AND time >= "
+    // 1626066000000ms
+    query3: " GROUP BY time(5m) fill(0) ORDER BY time DESC"
+    query: [query1, wifiApRec->wifiApName, query2, startMillis, query3].concat
+    // Build query uri string
+
+    influxQL_uri: [connRef->uri, """?db=""", connRef->influxDatabase, """&q=""", query].concat
+
+    // return [influxQL_uri, startMillis, now().toJavaMillis, 1626066000000ms]
+
+    try do
+      afHttpAuth("basic", connRef->influxUsername, connRef)
+      // -- Execute with afHttpExt --
+      afHttpRequest(method, ``+influxQL_uri, headers, body)
+      // afHttpRequest(method, ``+uri, headers, body)
+
+    catch (err) do
+          // perpetuate all other errors
+          afHttpResponse({safeNames})
+          throw err
+    end
+
+    res: afHttpResponse({safeNames})->body
+            .ioReadCsv()
+            .addCol("ts", (r => (r["time"].parseInt/1000000).fromJavaMillis))
+            .addCol("v0", (r => r["sum"].parseInt))
+            .removeCols(["name", "sum", "tags", "time"])
+            .sort((a,b)=> a->ts <=> b->ts)
+
+    res = res.reorderCols(res.colNames.moveTo("ts",0))
+
+    res.hisWrite(wifiApRec)
+
+    // If we got to this point, remove hisErr
+    commit(diff(wifiApRec, {-hisErr}, {transient}))
+
+    // Exit if empty read
+    // if (raw==null or isEmpty(raw)) throw "raw is empty"
+
+    // return {"hisStart": wifiApRec->hisStart, "hisEnd": wifiApRec->hisEnd, "written": size(res)}
+
+  end
+
+
+
+
+  /*------------------------------------------------------------------------------
+    Updates
+    2021-07-13  Chris Weyandt
+      Created.
+  ------------------------------------------------------------------------------*/
+---
+id:@p:devSBL:r:288c6ac1-6efe5b9a "hisSyncOrbTest"
+name:hisSyncOrbTest
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  /*------------------------------------------------------------------------------
+    Copyright 2021 Chris Weyandt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
+  ------------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------------
+    Run changepoint detection algorithm for a given orbTest record. The algorithm
+    requires a full day of wifi connection data to provide accurate results, so
+    the default time range is
+      start:   the day after the test record's current hisEnd
+      end:     yesterday()
+
+    Arguments:
+    orbTest         orbTest record (rec or ref)
+    startDate       Optional: date to begin calculations, overwrites existing data
+
+    Parameters from orbTest:
+      buildingRef:       siteRef of building for analysis
+      ahuRefs:           ahuRef[] of AHU's to include in the test
+      floorRefs:         floorRef[] floors withing building to include in test
+      searchMethod:      Str indicating CPD search method
+      searchModel:       Str indicating CPD search model
+      dailyThreshold:    Number indicating target AUC percentage per individual day
+      overallThreshold:  Number indicating target AUC percentage for daily average
+
+  ------------------------------------------------------------------------------*/
+
+
+  (orbTest: @p:devSBL:r:2885a3d4-35e7ceea, span) => do
+
+    logInfo({name:"orbTest",proj:"devSBL"}, "hisSyncOrbTest: " + orbTest.dis())
+
+    // Convert ref to rec if necessary
+    if (isRef(orbTest)) orbTest=readById(orbTest)
+
+    // Confirm orbTestRec points to an ORB Test Record, otherwise exit
+    if (orbTest.missing("orbTest"))
+      return {error: "No corresponding Test configuration found"}.toGrid()
+
+    if (orbTest.missing("searchMethod"))
+      return {error: "Missing searchMethod parameter on test record"}.toGrid()
+
+
+    // Determine span to update
+    if (span==null)
+      span = toDateSpan((today()-8day)..(today()-1day))
+
+
+    // Get building dis
+    try do
+        building: xReadById(orbTest->buildingRef)->dis
+        building = if (building.startsWith("0")) building.parseInt.toStr else building
+    end
+    catch (ex) return {error: "Error determining building dis",
+                       catch: ex }.toGrid()
+
+    // Collect points for analysis
+    wifiApGrid: readAll(hisEnd and wifiApBuilding==building and not disabled)
+
+    // Filter floors, if desired
+    if (orbTest.has("floorRefs")) do
+      // Gather list of floor numbers to include in the query
+      try floorList: orbTest->floorRefs.map(ref => xReadById(ref)->floorNum)
+      catch (ex) return {error: "Error finding floors in building",
+                         catch: ex }.toGrid()
+      wifiApGrid = wifiApGrid.findAll(r => do
+        floor: r->wifiApFloor
+        if (isStr(floor)) floor = floor.parseNumber
+        floorList.contains(floor)
+      end)
+
+    end
+
+
+
+
+    // Aggregate points to a single timeseries
+    wifiData: wifiApGrid.hisRead(span, {limit:null})
+                     .hisFoldCols(sum)
+                     //.hisRollup(max,rollup)
+                     .addColMeta("v0",  { "chartGroup":"g0",
+                                          "chartType": "line",
+                                          "strokeWidth":2,
+                                          "dis": "B" + building + " WiFi Connections"
+                                          })
+
+    try do
+      search: orbTest->searchMethod
+      model: orbTest->searchModel
+    catch (ex) return {error: "Invalid searchMethod or searchModel",
+                       catch: ex }.toGrid()
+
+    // Prepare query
+    uri: """http://fmcs-svc-mgr.lbl.gov/api/v1/"""
+    method: "POST"
+    path: if (search=="ORBanalyzer") """analyze""" else ( """models""" + "/")
+    headers: {"Content-Type": "application/json"}
+    endpoint: "/json"
+
+    // Determine correct parameters for endpoint
+    params: "?"
+    if (search=="binseg")
+      try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr()])
+      catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                          requires: "breakpoints",
+                          catch: ex }.toGrid()
+
+    else if (search=="window")
+      try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr() +
+                                  "&width=" + orbTest->width.toStr()])
+      catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                          requires: "breakpoints, width",
+                          catch: ex }.toGrid()
+
+    else if (search=="dynamic")
+      try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr() +
+                                  "&min_size=" + orbTest->minSize.toStr() +
+                                  "&jump=" + orbTest->step.toStr()])
+      catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                          requires: "breakpoints, width",
+                          catch: ex }.toGrid()
+
+    else if (search=="bottom_up")
+      try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr() +
+                                  "&min_size=" + orbTest->minSize.toStr() +
+                                  "&jump=" + orbTest->step.toStr()])
+      catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                          requires: "breakpoints, minSize, jump",
+                          catch: ex }.toGrid()
+
+    else if (search=="kernel")
+      if (model=="linear")
+        try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr() +
+                                    "&kernel=\"linear\"" +
+                                    "&min_size=" + orbTest->minSize.toStr() +
+                                    "&jump=" + orbTest->step.toStr()])
+        catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                            requires: "kernel, minSize, jump",
+                            catch: ex }.toGrid()
+
+      else
+        try params = concat([params,"breakpoints=" + orbTest->breakpoints.toStr() +
+                                    "&kernel=\"rbf\"" +
+                                    "&min_size=" + orbTest->minSize.toStr() +
+                                    "&jump=" + orbTest->step.toStr()])
+        catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                            requires: "minSize, jump",
+                            catch: ex }.toGrid()
+
+    else if (search=="ORBanalyzer") do
+        try params = concat([params,"dailyThreshold=" + orbTest->dailyThreshold.toStr() +
+                                    "&overallThreshold=" + orbTest->overallThreshold.toStr()])
+        catch (ex)  return {error: "Invalid model parameters in orbTest record",
+                            requires: "dailyThreshold, overallThreshold",
+                            catch: ex }.toGrid()
+    else
+      params = {}
+
+    // Compile query string
+    query: ""
+    if (search=="ORBanalyzer") do
+      query = uri + path + endpoint + params
+    else
+      query = uri + path + search + "/" + model + endpoint + params
+
+    raw: null
+    res: null
+
+    // -- Execute query with dcHttpExt --
+    raw = dcHttp(``+query, headers, wifiData.ioWriteJson(""), method)
+
+    // Parse results to hisGrid
+    try res = raw.ioReadJson()
+                 .toGrid()
+                 .addColMeta("v0", { "dis":"0RB Occupancy Estimate",
+                                     "chartGroup":"g1"})
+    catch (ex) return {error: "Error reading results from API",
+                       catch: ex,
+                       response: raw }.toGrid()
+
+    // Parse result values to boolean
+    try res = res.hisMap(v => v.parseBool())
+    catch (ex) return {error: "Error parsing results using parseBool",
+                       catch: ex }.toGrid()
+
+    // Write history to orbTest point
+    try res.hisWrite(orbTest)
+    catch (ex) return {error: "Error writing results to orbTest his",
+                       catch: ex }.toGrid()
+
+    return res.size
+
+  end
+
+
+  /*------------------------------------------------------------------------------
+    Updates
+    2021-01-11  Raphael Vitti
+      Moved from skyspark.lbl.gov.
+  ------------------------------------------------------------------------------*/
+---
+id:@p:devSBL:r:288f4279-5dafb3bb "viAhuOccStateHeatmap"
+name:viAhuOccStateHeatmap
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (span: lastWeek(), rollup:15min, sortBy:"Sort by offOccupied") => do
+    orbTests: readAll(orbTest)
+
+    ahuStateGrid: null
+    orbTests.each( test => do
+      /*
+      spanEnd: if (span.end.isDateTime) span.end.date else span.end
+      spanStart: if (span.start.isDateTime) span.start.date else span.start
+      if (test.has("hisEnd"))
+        if ((test->hisEnd.date < spanEnd) or (test->hisStart.date > spanStart)) do
+          test.hisSyncOrbTest(span)
+          toolOrbTestAhuStates(test, span)
+        end
+      */
+      ahuGrid: readAll(point and ahuInferredOccState and orbTestRef==test->id).hisRead(span)
+      // keepers: ahuGrid.cols.findAll( col => col.meta.has("onVacantSum") ).map col => col.name
+      // ahuGrid = ahuGrid.keepCols(keepers.add("ts"))
+      logInfo({name:"orbTest", proj:"devSBL"}, "viAhuOccStateHeatmap: " + test.dis())
+      ahuStateGrid = if (ahuStateGrid==null) ahuGrid else hisJoin([ahuStateGrid,ahuGrid])
+    end )
+
+    try do
+      // Transform data for heat map display
+      hisGrid: ahuStateGrid
+      .hisMap( val => do
+        if (val=="offOccupied") 0
+        else if (val=="offVacant") 1
+        else if (val=="onOccupied") 2
+        else if (val=="onVacant") 3
+        else val end )
+      .hisRollup(max, rollup)
+      .hisInterpolate()
+      .hisFlatten((val, ts, his) => do
+          // Return dict for heat map (3D)
+          {ts: ts.format("WWW M/DD k"+(if(rollup<60min) ":mm" else "")+"a"),
+           ahu: his->ahuDis,
+           v0: val}
+      end)
+      .reorderCols(["ts","ahu","v0"])
+      .addColMeta("v0", {enum:"offOccupied,offVacant,onOccupied,onVacant",
+                         chartMin: 0,
+                         chartMax: 3})
+      .addMeta({view: "chart", chartType:"heatMap",
+                title: "Inferred occupancy states by AHU",
+                chartLegend: "offOccupied,offVacant,onOccupied,onVacant",
+                colors: "#ff9999,#e0e0e0,#ccffcc,#ffcc99"})
+                // more: anHisGrid.meta["more"],
+                // limit: anHisGrid.meta["limit"]})
+
+
+    catch (ex) do
+      return ex
+    end
+
+    return hisGrid
+
+  end
+---
+id:@p:devSBL:r:28807873-695ef79a "recWifiUpdateAccessPoints"
+name:recWifiUpdateAccessPoints
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  /*
+    Copyright 2021 Chris Weyandt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
+  */
+  /*
+    Queries influxDB for a list of all wifi access points, checks to see
+    if a point already exists for the given AP, and creates a new point
+    if necessary.
+
+    Arguments:
+    connRef     ref to record containing influxdb connection info
+  */
+
+  (connRef: @p:devSBL:r:288077be-7e22d3b4) => do
+
+    method: "GET"
+    // headers: {"Accept": "application/json"}
+    headers: {"Accept": "application/csv"}
+    // headers: null
+    uri: connRef->uri
+    db: connRef->influxDatabase
+    user: connRef->influxUsername
+    query: "SHOW TAG VALUES WITH KEY = \"ap_name\""
+    body: null
+
+    influxQL_uri: [uri, """?db=""", db, """&q=""", query].concat
+
+    try do
+      afHttpAuth("basic", user, connRef)
+      // -- Execute with afHttpExt --
+      afHttpRequest(method, ``+influxQL_uri, headers, body)
+      // afHttpRequest(method, ``+uri, headers, body)
+
+    catch (err) do
+          // perpetuate all other errors
+          afHttpResponse({safeNames})
+          throw err
+    end
+
+    res: afHttpResponse({safeNames})
+
+    wifi_aps: res->body.ioReadCsv().colToList("value").unique()
+
+    // return wifi_aps
+
+    re: r"ap\d{3}-(\w{1,5})-(\w+)-\w+"
+    reFloor: r"^\d"
+    // Clean up and format grid
+    apGrid: wifi_aps.toGrid()
+                    .addCol("building", (r=>reGroups(re, r["val"])[1]))
+                    .addCol("location", (r=>reGroups(re, r["val"])[2]))
+                    .addCol("floor", (r=>reFind(reFloor, r["location"])))
+                    .addCol("wifiAp", (r=>r["val"]))
+
+    newApCount: 0
+    updatedApCount: 0
+
+    // return apGrid
+
+    // cycle through each AP from the API query
+    apGrid.each s => do
+      // Check to see if the station is already mapped to an equip
+      if (readAll(wifiApName == (s["wifiAp"])).isEmpty) do // Remove if updating
+        // If not existing, then prepare new point dict
+        ptDict: {
+          point, his, sensor, wifiAp,
+          wifiApName: s["wifiAp"],
+          wifiApBuilding: s["building"],
+          wifiApLocation: s["location"],
+          disMacro: "B\$wifiApBuilding Floor \$wifiApFloor WiFi: \$wifiApLocation",
+          siteRef: @p:devSBL:r:2880b80c-4ce38f16,
+          kind: "Number",
+          equipRef: @p:devSBL:r:2880b862-33bfb816,
+          }
+        ptDict = ptDict.set("tz", ptDict->equipRef->siteRef->tz)
+        if (s.has("floor")) do
+          ptDict = ptDict.set("wifiApFloor", s["floor"].parseInt)
+        else do
+          ptDict = ptDict.set("wifiApFloor", 0)
+        end
+
+        // Commit new if it doesn't exist
+        exRec: read(point and wifiApName==s["wifiAp"], false)
+        if (exRec==null) do
+          newApCount = newApCount + 1
+          commit(diff(exRec, ptDict, if (exRec==null) {add}))
+        end else do
+          updatedApCount = updatedApCount + 1
+          commit(diff(exRec, ptDict))
+        end
+      end
+    end
+
+    return {"newRecords": newApCount, "modifiedRecords": updatedApCount}
+
+  end
+
+  /*------------------------------------------------------------------------------
+    Updates
+    2021-07-13  Chris Weyandt
+      Created.
+  ------------------------------------------------------------------------------*/
+
+---
+id:@p:devSBL:r:2881dd6a-cbecb75d "viWifiConnectionsByFloor"
+name:viWifiConnectionsByFloor
+func
+mod:2021-07-30T00:28:30.07Z
+orbTest
+src:
+  (siteRef: null, span: pastWeek(), stacked: false) => do
+
+    // Get building dis
+    try do
+      building: xq().xqReadByIds([siteRef]).xqExecute.first->dis
+      building = if (building.startsWith("0")) building.parseInt.toStr else building
+    catch (ex) do
+      return ex
+    end
+
+    // Collect points for display
+
+
+    // pts = pts.map(r => r.set("wifiApFloor", r["wifiApFloor"].parseInt))
+
+    // Create list of floors within the given building
+    floors: readAll(point and hisEnd and wifiApBuilding==building and not disabled)
+               .unique("wifiApFloor")
+               .colToList("wifiApFloor")
+               .sort((a,b) => a <=> b)
+
+    floorSums: []
+    group: 0
+
+    floors.each f => do
+      if (not stacked) group = f
+      pts: readAll(hisEnd and wifiApBuilding==building and wifiApFloor==f and not disabled)
+      data: pts.hisRead(span, {limit:null})
+               .hisFoldCols(sum)
+               .addColMeta("v0",  { "chartGroup":"g" + group,
+                                    "chartType": "stackedBar",
+                                    "dis": "Floor " + f
+                                    })
+
+      floorSums = floorSums.add(data)
+    end
+
+    hisGrid: floorSums.hisJoin()
+                      .addMeta({title: "Wifi Connections by Floor in B" + building})
+
+
+    /*
+    hisGrid.colNames()[1..-1].each colName => do
+      hisGrid = hisGrid.addColMeta(colName, {chartGroup: data.col(colName).meta->locationRef->dis})
+    end
+    */
+
+    return hisGrid
+
+  end
+
+  /*
+  x,y,chartType,chartGroup,dis,color,title
+  "ts","v0","stackedBar","g0","Floor1","#3498db","Wifi Connections By Floor"
+  "ts","v1","stackedBar","g0","v1","#e74c3c",
+  "ts","v2","stackedBar","g0","v2","#27ae60",
+  "ts","v3","stackedBar","g0","v3","#9b59b6",
+  "ts","v4","stackedBar","g0","v4","#f39c12",
+  "ts","v5","stackedBar","g0","v5","#16a085",
+  */
