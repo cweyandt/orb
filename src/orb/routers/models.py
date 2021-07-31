@@ -55,8 +55,10 @@ def changepoint_methods(breakpoints: int,
     else:
         algo = rpt.Binseg(model=model).fit(val)
 
+    # Run Ruptures Changepoint Detection with predefined number of breakpoints
     bkps_i = algo.predict(n_bkps=breakpoints)
 
+    # Convert results to a Haystack grid
     return buildHaystackGrid(data, bkps_i, ts)
 
 

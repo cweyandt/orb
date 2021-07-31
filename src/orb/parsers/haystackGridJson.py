@@ -12,24 +12,13 @@ https://github.com/widesky/hszinc
 from datetime import datetime
 from typing import Dict, Union, Optional, List
 
-import hszinc
+# TODO: Redo this entire set of functions using hszinc and pyhaystack
+# import hszinc
+# import pyhaystack
 import numpy as np
 import pandas as pd
-import pyhaystack
 from pydantic import BaseModel
 
-
-# class HaystackGridJson(BaseModel):
-#     _kind: str
-#     meta: Dict[str, Union[str, int, Dict]]
-#     cols: List[{name: str
-#                 meta: Optional[Dict[str, Union[str, int, Dict]]]}]
-#     rows: List[{ts: {_kind: str
-#                      tz: str
-#                      val: datetime},
-#                 v0: Union[{_kind: str
-#                            val: Union[int, float, str]
-#                            unit: Optional[str] = None}, float]}]
 
 class GridMeta(BaseModel):
     ver: str
@@ -96,6 +85,7 @@ class GridJson(BaseModel):
             }
         }
 
+# Pull (ts,val) from a univariate haystack grid
 def parseHaystackGrid(data: GridJson):
     ts = []
     val = []
@@ -109,6 +99,8 @@ def parseHaystackGrid(data: GridJson):
     val = np.array(val)
     return ts, val
 
+# Convert univariate haystack grid to dataframe
+# TODO: rename func and vars to reflect that this converts to pandas Series, not Dataframe
 def gridToDataframe(data: GridJson):
     ts = []
     val = []
@@ -123,6 +115,8 @@ def gridToDataframe(data: GridJson):
     df = df.replace(0, np.nan).fillna(method='ffill')
     return df
 
+# Convert results from Ruptures CPD methods to haystack grid with alternating True/False values
+# TODO: This is just plain lazy. It was a first attempt and should be discarded.
 def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
     grid = {"_kind": "grid", "meta": {"ver": "3.0", "hisStart": data.meta.hisStart, "hisEnd": data.meta.hisEnd},
             "cols": [{"name": "ts"}, {"name": "v0", "kind": "Bool"}],
@@ -138,10 +132,10 @@ def buildHaystackGrid(data: GridJson, bkps_i: List[int], ts):
     grid["rows"].append({"ts": data.meta.hisEnd, "v0": str(toggle).lower()})  # Initialize last point from hisEnd
     return grid
 
+
+# Convert pandas Series to haystack Grid
+# TODO: Replace this with hszinc library implemented as a dependency
 def seriesToHaystackGrid(data: GridJson, changepoints):
-    # hisStart = changepoints.index[0]
-    # hisEnd = changepoints.index[-1]
-    # tz = "Los_Angeles"
     hisStart = data.meta.hisStart
     hisEnd = data.meta.hisEnd
     tz = data.meta.hisStart["tz"]
