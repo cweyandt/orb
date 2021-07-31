@@ -11,19 +11,56 @@ The API root is defined in [main.py](main.py), which imports three `router` endp
 # Endpoints
 
 ## `POST api/v1/analyze/json`
-### Analyze historical data utilizing the TimeFinder algorithm, returning daily start/stop times.
+![TimeFinder Change Point Method](../Documentation/assets/timefinder_params.png)
 
-**Input format:**     application/json, formatted as a Haystack Grid containing a 'ts' index and a 'val' column.  
-
-**Output format:**    application/json, formatted as a Hastack Grid  
 
 ## `POST api/v1/models/{search_method}/{model}/json`
-### Analyze historical data with Rupture changepoint detection algorithms.
-
-**Input format:**     application/json, formatted as a Haystack Grid containing a 'ts' index and a 'val' column.  
-
-**Output format:**    application/json, formatted as a Hastack Grid  
+![img.png](../Documentation/assets/ruptures_params.png)
 
 ## `POST api/v1/predict`
 ### Estimate future start/stop times based on historical data using the Prophet library
 Not implemented.
+
+
+# Request body schema - Haystack Grid 
+    {
+      "_kind": "grid",
+      "meta": {
+        "hisStart": {
+          "_kind": "dateTime",
+          "tz": "Los_Angeles",
+          "val": "2021-06-22T00:00:00-07:00"
+        },
+        "hisEnd": { ... }
+      },
+      "cols": [
+        {
+          "name": "ts",
+          "meta": {
+            "tz": "Los_Angeles"
+          }
+        },
+        {
+          "name": "v0",
+          "meta": { ... }
+        }
+      ],
+      "rows": [
+        {
+          "ts": {
+            "_kind": "dateTime",
+            "tz": "Los_Angeles",
+            "val": "2021-06-21T23:55:00-07:00"
+          },
+          "v0": {
+            "_kind": "number",
+            "val": 67.01000213623047,
+            "unit": "°F"
+          }
+        },
+        {
+          "ts": { ... },
+          "v0": { ... }
+        }
+      ]
+    }

@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 
 import ruptures as rpt
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, Body, Path
 from fastapi.responses import HTMLResponse
 
 from ..parsers.haystackGridJson import GridJson, parseHaystackGrid, buildHaystackGrid
@@ -29,13 +29,34 @@ class ModelName(str, Enum):
 
 
 @router.post("/{search_method}/{model}/json")
-def changepoint_methods(breakpoints: int,
-                        search_method: SearchMethod,
-                        model: ModelName,
-                        data: GridJson,
-                        width: Optional[int] = 40,
-                        min_size: Optional[int] = 3,
-                        jump: Optional[int] = 5):
+def ruptures_change_point_methods(breakpoints: int = Query(2, title="Expected breakpoints",
+                                                 description="Number of breakpoints to compute for input data."),
+                        search_method: SearchMethod = Path(None, title="Ruptures detection search method",
+                                                           description="see https://centre-borelli.github.io/ruptures"
+                                                                       "-docs/code-reference/"),
+                        model: ModelName = Path(None, title="Ruptures detection search method",
+                                                description="available methods differ by search_method. See "
+                                                            "https://centre-borelli.github.io/ruptures-docs/code"
+                                                            "-reference/"),
+                        data: GridJson = Body(None, title="Timeseries input",
+                                              description="Datetime indexed numerical series, modeled as a Haystack "
+                                                          "Grid"),
+                        width: Optional[int] = Query(40, title="Window length",
+                                                     description="**for search_method=window**: `width` determines the "
+                                                                 "length of the segmentation window "
+                                                                 "instance (in number of samples)"),
+                        min_size: Optional[int] = Query(3, title="Min distance",
+                                                        description="**for search_method=dynamic|bottomup|kernel**: "
+                                                                    "`min_size` "
+                                                                    "controls the minimum distance between change "
+                                                                    "points; for instance, if `min_size=10`, "
+                                                                    "all change points will be at least 10 samples "
+                                                                    "apart."),
+                        jump: Optional[int] = Query(5, title="change point grid",
+                                                    description="**for search_method=dynamic|bottomup|kernel**: `jump` "
+                                                                "controls the grid of possible change points; for "
+                                                                "instance, if `jump=k`, only changes at k, 2*k, 3*k,"
+                                                                "... are considered.")):
     (ts, val) = parseHaystackGrid(data)
 
     # Determine which search method to use from [Binseg, Window, Dynamic, BottomUp, Kernel]
