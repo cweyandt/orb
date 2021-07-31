@@ -16,16 +16,28 @@ router = APIRouter(
 def analyze_json(data: GridJson,
                  level: Optional[str] = Query("stream",
                                               title="Analysis level",
-                                              description="level (required): \"stream\" if passing in a Pandas Series with timestamp index and one data column or \"stamp\" if passing in a Pandas Dataframe with datestring index and two data columns containing suggested start and end times (\"start\" and \"end\")"),
+                                              description="level (required): \"stream\" if passing in a Pandas Series "
+                                                          "with timestamp index and one data column or \"stamp\" if "
+                                                          "passing in a Pandas Dataframe with datestring index and "
+                                                          "two data columns containing suggested start and end times "
+                                                          "(\"start\" and \"end\")"),
                  groupby: Optional[str] = Query("date",
                                                 title="Groupby parameter",
-                                                description="groupby (\"day\"): \"date\" to return results aggregated by date or \"day\" to return results aggregated by day of week"),
+                                                description="groupby (\"day\"): \"date\" to return results aggregated "
+                                                            "by date or \"day\" to return results aggregated by day "
+                                                            "of week"),
                  dailyThreshold: Optional[float] = Query(0.9,
                                                          title="Minimum daily AUC",
-                                                         description="dailyThreshold (0.9): minimum percentage of timeseries area under curve (AUC) to be covered by the suggested start and end times for each day"),
+                                                         description="dailyThreshold (0.9): minimum percentage of "
+                                                                     "timeseries area under curve (AUC) to be covered "
+                                                                     "by the suggested start and end times for each "
+                                                                     "day"),
                  overallThreshold: Optional[float] = Query(0.9,
                                                            title="Minimum overall AUC",
-                                                           description="overallThreshold (0.9): percentile of suggested start and end times for each day to return as suggestion for that day of week if groupby = \"day\""),
+                                                           description="overallThreshold (0.9): percentile of "
+                                                                       "suggested start and end times for each day to "
+                                                                       "return as suggestion for that day of week if "
+                                                                       "groupby = \"day\""),
                  ):
     data_df = gridToDataframe(data)
 
