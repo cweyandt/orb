@@ -41,15 +41,6 @@
                     <li class="breadcrumb-item"><a href="index.html">Home</a></li>
                     <li class="breadcrumb-item active">Model</li>
                 </ol>
-                <div class="top-search-box">
-	                 <form class="form-inline search-form justify-content-center" action="" method="get">
-	            
-			            <input type="text" placeholder="Search..." name="search" class="form-control search-input">
-			            
-			            <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-			            
-			        </form>
-                </div>
             </div><!--//container-->
         </header><!--//header-->
         <div class="doc-wrapper">
@@ -69,7 +60,7 @@
                                     
                                     </div><!--//section-block-->
                                     <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/wifi.png" alt="screenshot" /></a>
+                                        <img class="img-fluid" src="assets/images/skyspark_wifi.png" alt="screenshot" /></a>
                                     </div>                                
                                     <div id="chgpt" class="section-block">
                                     <h3 class="block-title">Change Point Detection</h3>
@@ -127,12 +118,31 @@
                                     <div class="screenshot-holder">
                                         <img class="img-fluid" src="assets/images/forecast.png" alt="screenshot" /></a>
                                     </div>
-                                    
                                 </div><!--//section-block-->
-                                
+                                <div id="validation" class="section-block">
+                                    <h3 class="block-title">Model Validation</h3>
+                                    <p>For many publications that model building occupancy or energy usage, the ground truth is drawn from one of two places: either a human ticker stands outside entrances and collects data on when people enter and exit the building (a very expensive collection), or security camera footage is used to denote when people enter, exit, or move throughout the building (large amount of data storage). The footage can be reviewed manually, or an algorithm can be applied to images to recognize when a person is in frame. Not all building managers have access to this data, so may need to build a ground truth from other sensors.
+                                    </p><p>
+                                    For the building that the wifi data used for modeling came from, there was also data from other sensor types. By combining all of these sensor data together, a ground truth can be synthesized. Each sensor type needed to be cleaned and formatted so that they could be combined. Because wifi data was taken in 5-minute intervals, any events need to also be rounded to 5-minute intervals and then filled in for all other parts of the interval.
+                                    </p>
+                                    <h4>Lights</h4>
+                                    <p>Light sensors are, assuming no malfunctioning or “bad” sensors, the most accurate way to determine whether a room is occupied. There were hundreds of these sensors in the building, and record whether the light is off or on. Any lights that were on more than 5% of the time between midnight and 3 AM were removed from the dataset, because they would imply occupancy at nearly all times of the day. This removal still left around 150 sensors. The last adjustment was to sum up the number of sensors and if there was more than 1 light on (allowing for a “bad” sensor or a custodian or guard to quickly enter a hallway and leave), then occupancy was marked.</p>
+                                    <h4>Accoustic sensors</h4>
+                                    <p>Accoustic sensors measure the sound, ostensibly in decibels, in a room. Some rooms may have a base sound level, especially if there is equipment continuously running, as in a server room. For this particular building, the base level was 52 dB, which is about the noise level of a refrigerator/freezer. The decibel scale is logarithmic, so increases to around 60-70 decibels would mean that there is a lot of additional noise. The maximum difference over each floor per date is found and thresholded to 5 dB for occupancy.</p>
+                                    <h4>Freezer Doors</h4>
+                                    <p>Freezer door sensors are event-based instead of on interval, and record when a freezer door is opened. The logic is that an occupant would be required to open or close the freezer door, so the building would be occupied at the time of these events. The times are rounded to five-minute intervals and then any joined onto the full spread of five-minute intervals.</p>
+                                    <h4>Fumehood Airflow</h4>
+                                    <p>The fumehood airflow, much like the freezers, changes when a person is present to raise or lower the fumehood. By taking the absolute difference, it is possible to see when the fumehoods were raised or lowered. There needs to be some threshold to account for small changes in the airflow not caused by raising or lowering of the hood, so here 100 is chosen. Other buildings may have different airflows that would require a different threshold.</p>
+                                    <h4>Water Flow</h4>
+                                    <p>Water flow is measured for the whole building in gallons per minute. Some buildings may have continuous water flowing, but generally it is when someone uses the bathroom or kitchen, or if there is equipment that requires water to flow through for a supervised experiment. The assumption is that if water is flowing, a person should be present to have caused that.</p>
+                                    <h4>Access Card Scans</h4>
+                                    <p>Access card scans occur when a person attempts to access either a specific room in the building, or the building itself; for this, each scan is labeled as internal or external, as well as whether or not the door was opened after scanning. These scans have timestamps that have to be rounded to the nearest 5 minutes, and if there are multiple scans that get rounded to the same timestamp, the duplicate is removed (i.e. counts do not matter). Additional logic can be applied that if an internal scan occurs without having an external scan right beforehand, occupancy is inferred between the internal scan and the previous scan.</p>
+                                    <p>All of this data is combined by removing the timezone from the datetime index, since the time of day is consistent, just either in Pacific Time or UTC. If any of the above sensors show occupation, the timestamp is marked as occupied. In order to prevent occupation defined as something such as a maintenance worker’s midnight security scan, a windowing function is used. To be considered occupied, the timestamp must be marked occupied and for the one hour surrounding the timestamp, there must be occupation at least half the time. A previous iteration used the half hour window and did not require occupation on the timestamp in question, so the start and end times were up to 15 minutes extended.
+                                    </p><p>
+                                    The ground truth assumes constant occupation between the first and last occupied timestamps, so the only important pieces of data become the “start time” and “end time” for each day. These start and end times can then be compared to predicted start and end times from the wifi data, as well as the actual HVAC run times for the day.
+                                    </p>
+                                </div><!--//section-block-->
                             </section><!--//doc-section-->
-                            
-                            
                         </div><!--//content-inner-->
                     </div><!--//doc-content-->
                     <div class="doc-sidebar col-md-3 col-12 order-0 d-none d-md-flex">
@@ -147,6 +157,7 @@
                                     <nav class="doc-sub-menu nav flex-column">
                                         <a class="nav-link scrollto" href="#analysis">Analysis</a>
                                         <a class="nav-link scrollto" href="#prediction">Prediction</a>
+                                        <a class="nav-link scrollto" href="#validation">Validation</a>
                                     </nav><!--//nav-->
                             </nav><!--//doc-menu-->
                         </div><!--//doc-nav-->

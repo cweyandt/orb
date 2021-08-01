@@ -41,22 +41,13 @@
                     <li class="breadcrumb-item"><a href="index.html">Home</a></li>
                     <li class="breadcrumb-item active">Data Pipeline</li>
                 </ol>
-                <div class="top-search-box">
-	                 <form class="form-inline search-form justify-content-center" action="" method="get">
-	            
-			            <input type="text" placeholder="Search..." name="search" class="form-control search-input">
-			            
-			            <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-			            
-			        </form>
-                </div>
             </div><!--//container-->
         </header><!--//header-->
         <div class="doc-wrapper">
             <div class="container">
                 <div id="doc-header" class="doc-header text-center">
                     <h1 class="doc-title"><span aria-hidden="true" class="icon icon_tools"></span> Data Pipeline</h1>
-                    <div class="meta"><i class="far fa-clock"></i> Last updated: Jun 29th, 2021</div>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Aug 1st, 2021</div>
                 </div><!--//doc-header-->
                 <div class="doc-body row">
                     <div class="doc-content col-md-9 col-12 order-1">
@@ -65,15 +56,25 @@
                                 <h2 class="section-title">Docker container</h2>
                                 <div class="section-block">
                                     <h3 class="block-title">1. Overview</h3>
-                                    <p>Below is an overview of the API structure in docker.</p>
+                                    <p>The ORB API follows <a href="https://github.com/OAI/OpenAPI-Specification/tree/main/examples/v3.1">OpenAPI Specification</a>. Below is an overview of the API structure in docker.</p>
                                     <div class="screenshot-holder">
                                         <img class="img-fluid" src="assets/images/api.png" alt="screenshot" /></a>
+                                    </div> 
+                                    <p>Below is an overview of the entire ORB data ecosystem and flow.</p>
+                                    <div class="screenshot-holder">
+                                        <img class="img-fluid" src="assets/images/ecosystem.png" alt="screenshot" /></a>
                                     </div> 
                                 </div><!--//section-block-->
                                 <div class="section-block">
                                     <h3 class="block-title">2. Details</h3>
-                                    <p>Details of how the API sections work.</p>
-
+                                    <h4>IT/OT Systems within each building</h4>
+                                    <p>Individual building wireless subnets record the devices connected to the network.</p>
+                                    <p>Building operational technology subnets record and report details from variety of sensors. These can include acoustic, water flow, and CO2 level sensors, HVAC operation status,  electricty usage, access badge swipes, and movement sensors.</p>
+                                    <h4>Enterprise Data Center</h4>
+                                    <p>InfluxDB gets anonymized counts of devices connected to each wireless subnet from the LNBL energy technologies area.</p>
+                                    <p>SkySpark is the data hub for the building manager. This is where data from the building occupancy sensors and the WiFi count data lands. This system also interfaces with the ORB API to get occupancy predictions.</p>
+                                    <p>ORB API takes data from SkySpark, crunches it, and sends it back.</p>
+                                    
                                         <h4 class="section-title">How to Run API</h4>
                                         <div class="section-block">
                                             <p>Make sure you have <a href="https://docs.docker.com/get-docker/">Docker</a> installed.
