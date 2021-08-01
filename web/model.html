@@ -47,7 +47,7 @@
             <div class="container">
                 <div id="doc-header" class="doc-header text-center">
                     <h1 class="doc-title"><span aria-hidden="true" class="icon icon_genius"></span> Model</h1>
-                    <div class="meta"><i class="far fa-clock"></i> Last updated: Jul 12th, 2021</div>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Aug 1st, 2021</div>
                 </div><!--//doc-header-->
                 <div class="doc-body row" >
                     <div class="doc-content col-md-9 col-12 order-1">
@@ -62,45 +62,18 @@
                                     <div class="screenshot-holder">
                                         <img class="img-fluid" src="assets/images/skyspark_wifi.png" alt="screenshot" /></a>
                                     </div>                                
-                                    <div id="chgpt" class="section-block">
-                                    <h3 class="block-title">Change Point Detection</h3>
-                                    <p>Well-established change point detection methods exist to identify large shifts in time series data, such as this aggregated WiFi connection data. In particular, the <a href='https://centre-borelli.github.io/ruptures-docs/'>ruptures</a> Python package simplifies the usage of several of these methods on numpy arrays. The 11 methods outlined below work particularly well to identify two change points in a single day (i.e. start of day and end of day).</p>
+                                    <div id="algo" class="section-block">
+                                        <h3 class="block-title">Optimization Algorithm</h3>
+                                        <p>The API takes an optimization approach to determining the best start and end times for a given day—</p>
+                                        <p>Each day’s wifi connection time series can be treated as a step function, hereafter referred to as <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=f(x)"><img src="https://render.githubusercontent.com/render/math?math=f(x)" style="max-width:100%;"></a>. Assuming that connection count is polled at n regular intervals, this series can be divided into <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=\frac{n(n-1)}{2}"><img src="https://render.githubusercontent.com/render/math?math=\frac{n(n-1)}{2}" style="max-width:100%;"></a> segments with distinct start time index <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=a"><img src="https://render.githubusercontent.com/render/math?math=a" style="max-width:100%;"></a> and end time index <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=b"><img src="https://render.githubusercontent.com/render/math?math=b" style="max-width:100%;"></a>, per the triangular number formula. At the standard 5-minute intervals used for polling wifi connection data, there are 41,328 such segments of the day.</p>
+                                        <p>Each of these segments cover a portion of the day’s total wifi connections, represented as <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=\frac{ \sum_{a}^{b} f(x) }{ \sum f(x) }"><img src="https://render.githubusercontent.com/render/math?math=\frac{ \sum_{a}^{b} f(x) }{ \sum f(x) }" style="max-width:100%;"></a>, a quantity we must maximize to ensure we’re identifying a segment of the day that covers as many connected devices as possible. Each segment also covers a portion of the day’s total time, represented as <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=\frac{b-a}{n}"><img src="https://render.githubusercontent.com/render/math?math=\frac{b-a}{n}" style="max-width:100%;"></a>, which we minimize to prevent unnecessary resource allocation. In order to optimize both of these proportions in their respective directions, we maximize their quotient. However, when done naively, this tends to identify a very short segment where the peak number of wifi connections occurred on that day, unfortunately missing many of the day’s connections. To address this, we set a threshold ε, the minimum proportion of wifi connections that must be captured by the segment, which is set to 0.9 by default but is customizable within the API call. This renders the optimizing function as follows:</p>
+                                        <p><a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=max \left( \frac{ \frac{ \sum_{a}^{b} f(x) }{ \sum f(x) }}{ \frac{ b-a }{ n }} \right); \frac{ \sum_{a}^{b} f(x) }{ \sum f(x) } &gt; \varepsilon"><img src="https://render.githubusercontent.com/render/math?math=max \left( \frac{ \frac{ \sum_{a}^{b} f(x) }{ \sum f(x) }}{ \frac{ b-a }{ n }} \right); \frac{ \sum_{a}^{b} f(x) }{ \sum f(x) } &gt; \varepsilon" style="max-width:100%;"></a></p>
+                                        <p>From a programmatic efficiency perspective, we benefit from a relatively small overall state space of 41,328 segments. As such, we are able to exhaustively search the space by calculating all possible ratios of ratios described above. That said, this is a <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=O(n^2)"><img src="https://render.githubusercontent.com/render/math?math=O(n^2)" style="max-width:100%;"></a> approach and would require significantly more resources if the intervals are shorter than 5 minutes or if multiple days are analyzed through this approach in aggregate. To use the brute-force approach in this situation and/or while working with limited computing resources, one may have to set bounds on <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=a"><img src="https://render.githubusercontent.com/render/math?math=a" style="max-width:100%;"></a> and <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=b"><img src="https://render.githubusercontent.com/render/math?math=b" style="max-width:100%;"></a> to reduce the number of segments being considered or condense the data into fewer intervals, potentially by averaging, summing, or picking one set value from a set of multiple intervals being aggregated. Alternatively, one can utilize a gradient ascent-like approach to exploring the state space, beginning training at the current start and end times used by the building for scheduling and calculating the ratios for surrounding segments to find the path to the optimal maximum—however, we have no guarantees this will converge at an optimal point given the expected variability in the data.</p>
+                                        <p>In order to suggest optimal start and end times for a given day of the week, we run the algorithm on specific dates that fell on that day of the week and collect the output start and end times. Thereafter, we select the suggested start time at the <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=( 1 - \vartheta )"><img src="https://render.githubusercontent.com/render/math?math=( 1 - \vartheta )" style="max-width:100%;"></a><sup>th</sup> percentile in its series and the suggested end time at the <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=\vartheta"><img src="https://render.githubusercontent.com/render/math?math=\vartheta" style="max-width:100%;"></a><sup>th</sup> percentile in its series, where <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=\vartheta"><img src="https://render.githubusercontent.com/render/math?math=\vartheta" style="max-width:100%;"></a> is a customizable threshold defaulting to 0.9, in order to represent the best times for that day of the week. This removes the <a target="_blank" rel="noopener noreferrer" href="https://render.githubusercontent.com/render/math?math=( 1 - \vartheta )"><img src="https://render.githubusercontent.com/render/math?math=( 1 - \vartheta )" style="max-width:100%;"></a> proportion of outlier results that may appear, such as holidays and other abnormal differences in occupancy.</p>
+
                                     
                                     </div><!--//section-block-->
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bin_rbf.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bin_l2.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bin_l1.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bu_rbf.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bu_l2.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/bu_l1.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/ke_rbf.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/ke_li.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/wi_rbf.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/wi_l2.png" alt="screenshot" /></a>
-                                    </div>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/wi_l1.png" alt="screenshot" /></a>
-                                    </div>
-                                
+                                    
                             </section><!--//doc-section-->
                             
                             <section id="endpoints" class="doc-section">
@@ -151,7 +124,7 @@
                                 <a class="nav-link scrollto" href="#approach">Approach</a>
                                     <nav class="doc-sub-menu nav flex-column">
                                         <a class="nav-link scrollto" href="#wifi">WiFi Connections</a>
-                                        <a class="nav-link scrollto" href="#chgpt">Change Point Detection</a>
+                                        <a class="nav-link scrollto" href="#algo">Optimization Algorithm</a>
                                     </nav><!--//nav-->
                                 <a class="nav-link scrollto" href="#endpoints">Endpoints</a>
                                     <nav class="doc-sub-menu nav flex-column">
