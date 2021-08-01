@@ -74,39 +74,41 @@
                                     <p>InfluxDB gets anonymized counts of devices connected to each wireless subnet from the LNBL energy technologies area.</p>
                                     <p>SkySpark is the data hub for the building manager. This is where data from the building occupancy sensors and the WiFi count data lands. This system also interfaces with the ORB API to get occupancy predictions.</p>
                                     <p>ORB API takes data from SkySpark, crunches it, and sends it back.</p>
-                                    
-                                        <h4 class="section-title">How to Run API</h4>
-                                        <div class="section-block">
-                                            <p>Make sure you have <a href="https://docs.docker.com/get-docker/">Docker</a> installed.
-                                            </p>
-                                            <p>In your terminal, change directory to the repository:                                        
-                                            </p>
-                                            <code>cd orb</code>
-                                            <br><br><p>Build the docker images:                                        
-                                            </p>
-                                            <code>docker compose build</code>
-                                            <br><br><p>Start the docker containers in detached mode:</p>
-                                            <code>docker compose up -d</code>
-                                            <br><br><p>View container logs</p>
-                                            <code>docker compose logs</code>- view existing logs for all containers<br>
-                                            <code>docker compose logs -f</code>- stream new logs for all containers (CTRL+C to exit)<br>
-                                            <code>docker compose logs -f orb</code>- stream logs for a specific container [orb, nginx, jupyter]<br>
-                                            <br><br><p>Stop the ORB applications:</p>
-                                            <code>docker compose down</code>
-                                            <br><br><p>Open the API using the token provided in your terminal:</p>
-                                            <p><a href="http://localhost/api/v1/docs">Swagger UI API Documentation</a></p>
-                                            <p><a href="http://localhost/api/v1/redoc">Redoc UI API Documentation</a></p>
-                                        </div>
-
                                 </div><!--//section-block-->                        
+                            
+                        </div><!--//content-inner-->
+                        <div class="content-inner">
+                            <section id="flot" class="doc-section">
+                                <h2 class="section-title">How to Run API</h2>
+                                    <div class="section-block">
+                                        <p>Make sure you have <a href="https://docs.docker.com/get-docker/">Docker</a> installed.
+                                        </p>
+                                        <p>In your terminal, change directory to the repository:                                        
+                                        </p>
+                                        <code>cd orb</code>
+                                        <br><br><p>Build the docker images:                                        
+                                        </p>
+                                        <code>docker compose build</code>
+                                        <br><br><p>Start the docker containers in detached mode:</p>
+                                        <code>docker compose up -d</code>
+                                        <br><br><p>View container logs</p>
+                                        <code>docker compose logs</code>- view existing logs for all containers<br>
+                                        <code>docker compose logs -f</code>- stream new logs for all containers (CTRL+C to exit)<br>
+                                        <code>docker compose logs -f orb</code>- stream logs for a specific container [orb, nginx, jupyter]<br>
+                                        <br><br><p>Stop the ORB applications:</p>
+                                        <code>docker compose down</code>
+                                        <br><br><p>Open the API using the token provided in your terminal:</p>
+                                        <p><a href="http://localhost/api/v1/docs">Swagger UI API Documentation</a></p>
+                                        <p><a href="http://localhost/api/v1/redoc">Redoc UI API Documentation</a></p>
+                                    </div>                                        
                             
                         </div><!--//content-inner-->
                     </div><!--//doc-content-->
                     <div class="doc-sidebar col-md-3 col-12 order-0 d-none d-md-flex">
                         <div id="doc-nav" class="doc-nav">
                             <nav id="doc-menu" class="nav doc-menu flex-column sticky">
-                                <a class="nav-link scrollto" href="#overview">Overview</a>
-                                <a class="nav-link scrollto" href="#flot">Details</a>
+                                <a class="nav-link scrollto" href="#overview">Docker container</a>
+                                <a class="nav-link scrollto" href="#flot">How to Run API</a>
                             </nav><!--//doc-menu-->
                         </div>
                     </div><!--//doc-sidebar-->
