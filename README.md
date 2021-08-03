@@ -3,6 +3,7 @@
 This software infers occupancy patterns in buildings utilizing Wi-Fi device connection statistics. It inputs numerical counts of devices connected to the wireless access points within a building and outputs estimated periods of occupancy. This proof-of-concept application is implemented as a REST API tailored to perform inference on data fed to it from an Energy Management and Information System ([EMIS](https://buildings.lbl.gov/emis/building-energy-information-systems)).  Sample application code is provided for the [Skyspark](https://skyfoundry.com/product) platform.  
 
 Quick links
+- [Quick start instructions](https://github.com/cweyandt/orb#getting-started)
 - [ORB API Reference](/src/README.md)
 - [ORB Functions](/src/orb/orb_functions/README.md)
 - [Sample Skyspark client application](skyspark_client/README.md)
