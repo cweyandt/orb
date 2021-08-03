@@ -49,7 +49,7 @@
             <div class="container">
                 <div id="doc-header" class="doc-header text-center">
                     <h1 class="doc-title"><i class="icon fa fa-paper-plane"></i> Quick Start</h1>
-                    <div class="meta"><i class="far fa-clock"></i> Last updated: Jul 12th, 2021</div>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Aug 3rd, 2021</div>
                 </div><!--//doc-header-->
                 <div class="doc-body row">
                     <div class="doc-content col-md-9 col-12 order-1">
@@ -100,24 +100,107 @@
                                     <p>Interactive API documentation and testing can be found here:</p>
                                     <p><a href="http://localhost/api/v1/docs">Swagger UI API Documentation</a></p>
                                     <p><a href="http://localhost/api/v1/redoc">Redoc UI API Documentation</a></p>
-                                    <br><p>Call the API:</p>
-                                    <code class=" language-python">
-import requests
+                                </div><!--//section-block-->
+                                <div id="python" class="section-block">
+                                    <div class="code-block">
+                                        <h3>Example Call to the API:</h3>
+                                        <h4>Import necessary packages</h4>
+                                        <pre><code class="language-python">import requests
 import pandas as pd
 import numpy as np
-from datetime import datetime
-                                    </code>
-                                    <div class="screenshot-holder">
-                                        <img class="img-fluid" src="assets/images/jupyter.PNG" alt="screenshot" /></a>
-                                </div> 
-                                </div>
+from datetime import datetime</code></pre>
+                                        <h4>Connection Parameters</h4>
+                                        <pre><code class="language-python">URL = 'http://orb/models/binseg_rbf'
+HEADERS = {'Content-type': 'application/json'}</code></pre>
+                                        <h4>Load sample data</h4>
+                                        <pre><code class="language-python">
+wifiData = pd.read_pickle('../data/cleaned/' + 'wifi_ap_data.pkl')
+wifiTotals = wifiData.sum(axis=1).replace(0, np.nan).fillna(method='ffill')
+wifiTotals.index = wifiTotals.index.tz_localize(None)</code></pre>
+                                        <h4>Slice one week of data</h4>
+                                        <pre><code class="language-python">vals = np.array(wifiTotals["2020-6-20 00:00":"2020-6-28 00:00"])
+ts = np.array(wifiTotals["2020-6-20 00:00":"2020-6-28 00:00"].index)
+DATA = {"ts": ts.tolist(), "val": vals.tolist()}</code></pre>
+                                        <h4>Define model parameters</h4>
+                                        <pre><code class="language-python">PARAMS = {"breakpoints": "10"}</code></pre>
+                                        <h4>Genereate request to ORB API</h4>
+                                        <pre><code class="language-python">response = requests.put(URL, headers=HEADERS, json=DATA, params=PARAMS)
+response.json()</code></pre>
+                                        <pre>{'bkps_i': [640, 775, 930, 1065, 1220, 1355, 1515, 1655, 1800, 1940, 2305],
+ 'bkps_ts': ['2020-06-22T05:20:00+00:00',
+  '2020-06-22T16:35:00+00:00',
+  '2020-06-23T05:30:00+00:00',
+  '2020-06-23T16:45:00+00:00',
+  '2020-06-24T05:40:00+00:00',
+  '2020-06-24T16:55:00+00:00',
+  '2020-06-25T06:15:00+00:00',
+  '2020-06-25T17:55:00+00:00',
+  '2020-06-26T06:00:00+00:00',
+  '2020-06-26T17:40:00+00:00']}</pre>
+                                        <pre><code class="language-python">response = requests.put(URL, headers=HEADERS, json=DATA, params=PARAMS)
+print(response.json())</code></pre>
+                                        <pre>
+{'bkps_i': [640, 775, 930, 1065, 1220, 1355, 1515, 1655, 1800, 1940, 2305], 'bkps_ts': ['2020-06-22T05:20:00+00:00', '2020-06-22T16:35:00+00:00', '2020-06-23T05:30:00+00:00', '2020-06-23T16:45:00+00:00', '2020-06-24T05:40:00+00:00', '2020-06-24T16:55:00+00:00', '2020-06-25T06:15:00+00:00', '2020-06-25T17:55:00+00:00', '2020-06-26T06:00:00+00:00', '2020-06-26T17:40:00+00:00']}</pre>
+                                        <h4>Try the JSON Endpoint with Skyspark data sample formated as Haystack3 Grid object</h4>
+                                        <pre><code class="language-python">from pprint import pprint
+import json
+
+def printResponse(res):
+    print("Response:\t" + str(res))
+    print("Reason:\t\t" + str(res.reason))
+    print("Headers:\t" + str(res.headers))
+    print("Content:\t _____________________________" )
+    pprint(json.loads(res.content), width=120)
+
+url = 'http://orb/models/kernel/l2/json'
+headers = {'Content-type': 'application/json'}
+params = {"breakpoints": 10}
+
+# Open the skyspark_grid.json file
+with open("../01_ETL/skyspark_grid.json") as file:
+    # Load its content and make a new dictionary
+    data = json.load(file)
+
+response = requests.post(url, headers=headers, json=data, params=params)
+printResponse(response)</code></pre>
+                                        <pre>Response:  <Response [200]>
+Reason:     OK
+Headers:    {'date': 'Sat, 10 Jul 2021 16:33:49 GMT', 'server': 'uvicorn', 'content-length': '1387', 'content-type': 'application/json'}
+Content:     _____________________________
+{'_kind': 'grid',
+ 'cols': [{'name': 'ts'}, {'kind': 'Bool', 'name': 'v0'}],
+ 'meta': {'hisEnd': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-23T00:00:00-07:00'},
+          'hisStart': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T00:00:00-07:00'},
+          'ver': '3.0'},
+ 'rows': [{'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T00:00:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T04:35:00-07:00'}, 'v0': 'true'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T08:30:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T12:20:00-07:00'}, 'v0': 'true'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T13:10:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T14:40:00-07:00'}, 'v0': 'true'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T15:25:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T17:00:00-07:00'}, 'v0': 'true'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T17:50:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T19:10:00-07:00'}, 'v0': 'true'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-22T21:00:00-07:00'}, 'v0': 'false'},
+          {'ts': {'_kind': 'dateTime', 'tz': 'Los_Angeles', 'val': '2021-06-23T00:00:00-07:00'}, 'v0': 'true'}]}</pre>
+                                    </div><!--//code-block-->
+                                </div><!--//section-block-->
                             </section><!--//doc-section-->
                             <section id="profit" class="doc-section">
-                                <h2 class="section-title">Save $$$</h2>
+                                <h2 class="section-title">Applying Response</h2>
                                 <div class="section-block">
-                                    <p>Give examples of how to determine building cost savings.
+                                    <p>Client-side applications can be used to interpret the ORB API response. One example application is shown below.
                                     </p>
-                                </div>
+                                    <div class="screenshot-holder">
+                                            <img class="img-fluid" src="assets/images/skyspark_inference_detail.png" alt="screenshot" /></a>
+                                    </div> 
+                                    Above is a single HVAC system's operating schedule plotted along side Wi-Fi data and predicted building occupation.
+                                    <div class="screenshot-holder">
+                                            <img class="img-fluid" src="assets/images/skyspark_inference_aggregate.png" alt="screenshot" /></a>
+                                    </div> 
+                                    Above is an aggregation of multiple HVAC systems' operating schedules plotted along side Wi-Fi data and predicted building occupation, where different colors represent energy wastages for unoccupied buildings or occupation without HVAC running.
+                                </div><!--//section-block-->
                             </section><!--//doc-section-->
                             
                             
@@ -130,7 +213,7 @@ from datetime import datetime
 	                                <a class="nav-link scrollto" href="#data-collection">Data Collection</a>
 	                                <a class="nav-link scrollto" href="#data-cleaning">Data Cleaning</a>
 	                                <a class="nav-link scrollto" href="#run-api">Run Api</a>
-	                                <a class="nav-link scrollto" href="#profit">Save $$$</a>
+	                                <a class="nav-link scrollto" href="#profit">Applying Response</a>
 	                            </nav><!--//doc-menu-->
 	                        
                         </div>
