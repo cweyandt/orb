@@ -8,6 +8,9 @@ This application uses the [FastAPI framework](https://fastapi.tiangolo.com/) to 
 
 The API root is defined in [main.py](main.py), which imports three `router` endpoints from [analyze.py](orb/routers/analyze.py), [models.py](orb/routers/models.py), and [predict.py](orb/routers/predict.py). Each endpoint is an independent application.
 
+# Docker container structure
+![Docker container structure](../Documentation/assets/orb_containers.png)
+
 # Endpoints
 
 ## `POST api/v1/analyze/json`
